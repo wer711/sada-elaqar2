@@ -369,7 +369,7 @@ export default function SadaLandingPage() {
   const totalCities = Object.values(CITIES).reduce((a, b) => a + b.length, 0);
 
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen flex flex-col overflow-x-hidden">
       {/* ── HEADER ── */}
       <header className="bg-[#0f1117] px-4 sm:px-6 py-4 flex items-center justify-between sticky top-0 z-50">
         <a
@@ -396,7 +396,7 @@ export default function SadaLandingPage() {
             href={trackedUrl("/", "header-cta")}
             target="_blank"
             rel="noopener noreferrer"
-            className="bg-[#c9a84c] text-[#0f1117] font-bold text-sm px-4 py-2 rounded-lg no-underline hover:opacity-90 transition-opacity whitespace-nowrap flex items-center gap-1.5"
+            className="bg-[#c9a84c] text-[#0f1117] font-bold text-sm px-4 py-2.5 rounded-lg no-underline hover:opacity-90 transition-opacity whitespace-nowrap flex items-center gap-1.5 min-h-[44px]"
             onClick={() => trackEvent("click_header_cta")}
           >
             جرّب النسخة الكاملة
@@ -407,7 +407,7 @@ export default function SadaLandingPage() {
 
       {/* ── HERO: THE HOOK ── */}
       <section className="bg-[#0f1117] pt-10 pb-20 px-5 text-center relative overflow-hidden">
-        <div className="absolute top-[-80px] left-1/2 -translate-x-1/2 w-[500px] h-[500px] bg-[rgba(201,168,76,0.15)] rounded-full pointer-events-none" />
+        <div className="absolute top-[-80px] left-1/2 -translate-x-1/2 w-[300px] h-[300px] sm:w-[500px] sm:h-[500px] bg-[rgba(201,168,76,0.15)] rounded-full pointer-events-none" />
 
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -415,7 +415,7 @@ export default function SadaLandingPage() {
           transition={{ duration: 0.6 }}
         >
           {/* Urgency Badge */}
-          <div className="inline-flex items-center gap-2 bg-[#c9a84c]/10 border border-[#c9a84c]/30 text-[#c9a84c] rounded-full px-4 py-1.5 text-xs font-bold mb-5">
+          <div className="inline-flex flex-wrap items-center justify-center gap-1.5 sm:gap-2 bg-[#c9a84c]/10 border border-[#c9a84c]/30 text-[#c9a84c] rounded-full px-3 sm:px-4 py-1.5 text-[10px] sm:text-xs font-bold mb-5">
             <Zap className="w-3.5 h-3.5" />
             <span>عرض لفترة محدودة — مجاناً بالكامل</span>
             <div className="flex gap-1 mr-1 items-center">
@@ -908,7 +908,8 @@ export default function SadaLandingPage() {
             </h2>
           </motion.div>
 
-          <div className="overflow-x-auto">
+          {/* Desktop: Table | Mobile: Cards */}
+          <div className="hidden sm:block overflow-x-auto">
             <table className="w-full text-sm border-collapse">
               <thead>
                 <tr className="border-b-2 border-[#e2e4ed]">
@@ -935,6 +936,32 @@ export default function SadaLandingPage() {
               </tbody>
             </table>
           </div>
+
+          {/* Mobile: Stacked cards */}
+          <div className="sm:hidden flex flex-col gap-3">
+            {BEFORE_AFTER.map((item, idx) => (
+              <motion.div
+                key={idx}
+                initial={{ opacity: 0, y: 10 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: idx * 0.08 }}
+                className="bg-white rounded-xl p-4 border border-[#e2e4ed]"
+              >
+                <div className="font-bold text-[#0f1117] text-sm mb-2">{item.label}</div>
+                <div className="flex items-center gap-3">
+                  <div className="flex-1 bg-red-50 rounded-lg px-3 py-2 text-center">
+                    <div className="text-[10px] text-red-400 font-semibold mb-0.5">بدون 😩</div>
+                    <div className="text-xs text-red-500 font-bold">{item.before}</div>
+                  </div>
+                  <div className="flex-1 bg-[#0D7C66]/5 rounded-lg px-3 py-2 text-center">
+                    <div className="text-[10px] text-[#0D7C66] font-semibold mb-0.5">مع صدى العقار 🚀</div>
+                    <div className="text-xs text-[#0D7C66] font-bold">{item.after}</div>
+                  </div>
+                </div>
+              </motion.div>
+            ))}
+          </div>
         </div>
       </section>
 
@@ -952,7 +979,7 @@ export default function SadaLandingPage() {
             </h2>
           </motion.div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-5">
             {TESTIMONIALS.map((t, idx) => (
               <motion.div
                 key={idx}
@@ -985,7 +1012,7 @@ export default function SadaLandingPage() {
 
       {/* ── SOCIAL PROOF NUMBERS ── */}
       <section className="bg-[#0f1117] py-12 px-5">
-        <div className="max-w-4xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
+        <div className="max-w-4xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-6 text-center">
           {[
             { icon: <Users className="w-6 h-6 text-[#c9a84c] mx-auto mb-2" />, num: "2,800+", label: "مستخدم نشط" },
             { icon: <Globe className="w-6 h-6 text-[#c9a84c] mx-auto mb-2" />, num: String(countryCount), label: "دولة عربية" },
@@ -1009,7 +1036,7 @@ export default function SadaLandingPage() {
 
       {/* ── FINAL CTA ── */}
       <section className="bg-gradient-to-b from-[#0f1117] to-[#1a1c2e] py-16 px-5 text-center relative overflow-hidden">
-        <div className="absolute top-[-50px] left-1/2 -translate-x-1/2 w-[400px] h-[400px] bg-[rgba(201,168,76,0.08)] rounded-full pointer-events-none" />
+        <div className="absolute top-[-50px] left-1/2 -translate-x-1/2 w-[280px] h-[280px] sm:w-[400px] sm:h-[400px] bg-[rgba(201,168,76,0.08)] rounded-full pointer-events-none" />
 
         <motion.div
           initial={{ opacity: 0 }}
@@ -1042,13 +1069,13 @@ export default function SadaLandingPage() {
       </section>
 
       {/* ── FOOTER ── */}
-      <footer className="mt-auto text-center py-5 px-5 text-xs text-[#aaa] border-t border-[#e2e4ed] bg-white">
+      <footer className="mt-auto text-center py-5 px-5 text-xs text-[#aaa] border-t border-[#e2e4ed] bg-white leading-relaxed">
         أداة مجانية من{" "}
         <a
           href={trackedUrl("/", "footer")}
           target="_blank"
           rel="noopener noreferrer"
-          className="text-[#c9a84c] no-underline"
+          className="text-[#c9a84c] no-underline py-1 px-1 inline-block"
           onClick={() => trackEvent("click_footer")}
         >
           صدى العقار
@@ -1058,7 +1085,7 @@ export default function SadaLandingPage() {
           href={trackedUrl("/privacy", "footer-privacy")}
           target="_blank"
           rel="noopener noreferrer"
-          className="text-[#aaa] no-underline hover:text-[#c9a84c]"
+          className="text-[#aaa] no-underline hover:text-[#c9a84c] py-1 px-1 inline-block"
         >
           سياسة الخصوصية
         </a>
@@ -1069,7 +1096,7 @@ export default function SadaLandingPage() {
         href="https://wa.me/213696212465?text=مرحباً، أريد الاستفسار عن صدى العقار"
         target="_blank"
         rel="noopener noreferrer"
-        className="fixed bottom-6 left-6 z-50 w-14 h-14 bg-[#25D366] rounded-full flex items-center justify-center shadow-[0_4px_20px_rgba(37,211,102,0.4)] hover:scale-110 transition-transform"
+        className="fixed bottom-5 right-5 sm:bottom-6 sm:right-6 z-50 w-12 h-12 sm:w-14 sm:h-14 bg-[#25D366] rounded-full flex items-center justify-center shadow-[0_4px_20px_rgba(37,211,102,0.4)] hover:scale-110 transition-transform"
         title="تواصل عبر واتساب"
         onClick={() => trackEvent("click_whatsapp_float")}
       >

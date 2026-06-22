@@ -1,14 +1,49 @@
 import { NextRequest, NextResponse } from "next/server";
-import { GoogleGenerativeAI } from "@google/generative-ai";
 import { db } from "@/lib/db";
 
-// ─── Gemini Setup ──────────────────────────────────────────
-function getGeminiClient() {
+// ─── Dual Provider: Gemini (production) + z-ai (dev fallback) ──
+async function generateWithGemini(prompt: string): Promise<string> {
+  const { GoogleGenerativeAI } = await import("@google/generative-ai");
   const apiKey = process.env.GEMINI_API_KEY;
-  if (!apiKey) {
-    throw new Error("GEMINI_API_KEY is not configured. Add it to .env file.");
+  if (!apiKey) throw new Error("NO_GEMINI_KEY");
+
+  const genAI = new GoogleGenerativeAI(apiKey);
+  const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+  const result = await model.generateContent(prompt);
+  return result.response.text();
+}
+
+async function generateWithZai(prompt: string): Promise<string> {
+  const ZAI = (await import("z-ai-web-dev-sdk")).default;
+  const zai = await ZAI.create();
+  const completion = await zai.chat.completions.create({
+    messages: [
+      {
+        role: "assistant",
+        content: "أنت مساعد تسويق عقاري محترف. أجب فقط بصيغة JSON كما هو مطلوب بدون أي نص إضافي.",
+      },
+      { role: "user", content: prompt },
+    ],
+    thinking: { type: "disabled" },
+  });
+  return completion.choices[0]?.message?.content || "";
+}
+
+async function generateContent(prompt: string): Promise<string> {
+  // Try Gemini first (works on Vercel/Netlify)
+  try {
+    return await generateWithGemini(prompt);
+  } catch (geminiError) {
+    const errMsg = geminiError instanceof Error ? geminiError.message : "";
+    console.log("Gemini failed (" + errMsg + "), trying z-ai fallback...");
+    // If Gemini fails, fall back to z-ai (works locally)
+    try {
+      return await generateWithZai(prompt);
+    } catch (zaiError) {
+      console.error("Both providers failed:", { geminiError, zaiError });
+      throw new Error("جميع مزودي الذكاء الاصطناعي غير متاحين حالياً");
+    }
   }
-  return new GoogleGenerativeAI(apiKey);
 }
 
 // ─── Invisible Smart Rate Limiting ──────────────────────────
@@ -86,9 +121,8 @@ export async function POST(req: NextRequest) {
       await new Promise((resolve) => setTimeout(resolve, delayMs));
     }
 
-    // ── Parse & Validate ──
     const body = await req.json();
-    const { propType, purpose, city, area, space, rooms, feature, price, utm_source, utm_medium, utm_campaign, utm_content } = body;
+    const { propType, purpose, city, area, space, rooms, feature, price } = body;
 
     if (!propType || !purpose || !city) {
       return NextResponse.json(
@@ -97,7 +131,6 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Build extras
     const extras = [
       space ? `المساحة: ${space} م²` : "",
       rooms ? `عدد الغرف: ${rooms}` : "",
@@ -140,19 +173,14 @@ ${extras ? `- تفاصيل إضافية: ${extras}` : ""}
 
 اكتب بلهجة عربية فصيحة مناسبة لمدينة ${city}. لا تستخدم كلمات إنجليزية.`;
 
-    // ── Gemini AI Generation ──
-    const genAI = getGeminiClient();
-    const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
-
-    const result = await model.generateContent(prompt);
-    const text = result.response.text();
+    // ── Generate with dual provider ──
+    const text = await generateContent(prompt);
 
     let parsed;
     try {
       const clean = text.replace(/```json|```/g, "").trim();
       parsed = JSON.parse(clean);
     } catch {
-      // Try to extract JSON from the response
       const jsonMatch = text.match(/\{[\s\S]*"titles"[\s\S]*\}/);
       if (jsonMatch) {
         try {
@@ -171,11 +199,9 @@ ${extras ? `- تفاصيل إضافية: ${extras}` : ""}
       }
     }
 
-    // ── Track usage ──
     dailyCount++;
     incrementIpCount(ip);
 
-    // Save to database
     try {
       await db.titleGeneration.create({
         data: {
@@ -202,14 +228,6 @@ ${extras ? `- تفاصيل إضافية: ${extras}` : ""}
     });
   } catch (error) {
     console.error("Generation error:", error);
-    const message = error instanceof Error ? error.message : "حدث خطأ أثناء التوليد";
-    // Check if it's a Gemini API key error
-    if (message.includes("GEMINI_API_KEY") || message.includes("API key")) {
-      return NextResponse.json(
-        { error: "مفتاح API غير مُعدّ — يرجى التواصل مع المسؤول" },
-        { status: 500 }
-      );
-    }
     return NextResponse.json(
       { error: "حدث خطأ أثناء التوليد — تحقق من اتصالك وحاول مجدداً" },
       { status: 500 }
