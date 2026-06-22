@@ -1,7 +1,33 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 
-// ─── Dual Provider: Gemini (production) + z-ai (dev fallback) ──
+// ─── Triple Provider: Groq → Gemini → z-ai ─────────────────
+// Groq: Free, fast, global (no geo-restrictions) — PRIMARY
+// Gemini: Free but geo-restricted — SECONDARY
+// z-ai: Works locally only — FALLBACK
+
+async function generateWithGroq(prompt: string): Promise<string> {
+  const Groq = (await import("groq-sdk")).default;
+  const apiKey = process.env.GROQ_API_KEY;
+  if (!apiKey) throw new Error("NO_GROQ_KEY");
+
+  const groq = new Groq({ apiKey });
+  const chatCompletion = await groq.chat.completions.create({
+    messages: [
+      {
+        role: "system",
+        content: "أنت مساعد تسويق عقاري محترف. أجب فقط بصيغة JSON كما هو مطلوب بدون أي نص إضافي.",
+      },
+      { role: "user", content: prompt },
+    ],
+    model: "llama-3.3-70b-versatile",
+    temperature: 0.7,
+    max_tokens: 2000,
+  });
+
+  return chatCompletion.choices[0]?.message?.content || "";
+}
+
 async function generateWithGemini(prompt: string): Promise<string> {
   const { GoogleGenerativeAI } = await import("@google/generative-ai");
   const apiKey = process.env.GEMINI_API_KEY;
@@ -30,20 +56,36 @@ async function generateWithZai(prompt: string): Promise<string> {
 }
 
 async function generateContent(prompt: string): Promise<string> {
-  // Try Gemini first (works on Vercel/Netlify)
+  const errors: string[] = [];
+
+  // 1. Try Groq (best for production — free, fast, global)
+  try {
+    return await generateWithGroq(prompt);
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : "unknown";
+    errors.push(`Groq: ${msg}`);
+    console.log(`Groq failed (${msg})`);
+  }
+
+  // 2. Try Gemini (free but geo-restricted)
   try {
     return await generateWithGemini(prompt);
-  } catch (geminiError) {
-    const errMsg = geminiError instanceof Error ? geminiError.message : "";
-    console.log("Gemini failed (" + errMsg + "), trying z-ai fallback...");
-    // If Gemini fails, fall back to z-ai (works locally)
-    try {
-      return await generateWithZai(prompt);
-    } catch (zaiError) {
-      console.error("Both providers failed:", { geminiError, zaiError });
-      throw new Error("جميع مزودي الذكاء الاصطناعي غير متاحين حالياً");
-    }
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : "unknown";
+    errors.push(`Gemini: ${msg}`);
+    console.log(`Gemini failed (${msg})`);
   }
+
+  // 3. Try z-ai (local dev fallback)
+  try {
+    return await generateWithZai(prompt);
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : "unknown";
+    errors.push(`z-ai: ${msg}`);
+    console.log(`z-ai failed (${msg})`);
+  }
+
+  throw new Error(`All AI providers failed: ${errors.join(" | ")}`);
 }
 
 // ─── Invisible Smart Rate Limiting ──────────────────────────
@@ -173,7 +215,7 @@ ${extras ? `- تفاصيل إضافية: ${extras}` : ""}
 
 اكتب بلهجة عربية فصيحة مناسبة لمدينة ${city}. لا تستخدم كلمات إنجليزية.`;
 
-    // ── Generate with dual provider ──
+    // ── Generate with triple provider ──
     const text = await generateContent(prompt);
 
     let parsed;
