@@ -1,0 +1,967 @@
+     1→     1→"use client";
+     2→     2→
+     3→     3→import { useState, useEffect, useCallback, useRef } from "react";
+     4→     4→import { motion, AnimatePresence } from "framer-motion";
+     5→     5→import {
+     6→     6→  Home,
+     7→     7→  Sparkles,
+     8→     8→  Copy,
+     9→     9→  Check,
+    10→    10→  RotateCcw,
+    11→    11→  ChevronDown,
+    12→    12→  Phone,
+    13→    13→  Users,
+    14→    14→  Clock,
+    15→    15→  Globe,
+    16→    16→  Star,
+    17→    17→  ArrowLeft,
+    18→    18→  Zap,
+    19→    19→  Shield,
+    20→    20→  TrendingUp,
+    21→    21→  MessageCircle,
+    22→    22→  AlertTriangle,
+    23→    23→  Building2,
+    24→    24→  HandCoins,
+    25→    25→  Eye,
+    26→    26→  BarChart3,
+    27→    27→  ExternalLink,
+    28→    28→} from "lucide-react";
+    29→    29→
+    30→    30→// ─── Types ─────────────────────────────────────────────────
+    31→    31→interface TitleResult {
+    32→    32→  platform: string;
+    33→    33→  title: string;
+    34→    34→}
+    35→    35→
+    36→    36→interface FormData {
+    37→    37→  propType: string;
+    38→    38→  purpose: string;
+    39→    39→  city: string;
+    40→    40→  area: string;
+    41→    41→  space: string;
+    42→    42→  rooms: string;
+    43→    43→  feature: string;
+    44→    44→  price: string;
+    45→    45→}
+    46→    46→
+    47→    47→// ─── Constants ─────────────────────────────────────────────
+    48→    48→const INITIAL_FORM: FormData = {
+    49→    49→  propType: "",
+    50→    50→  purpose: "",
+    51→    51→  city: "",
+    52→    52→  area: "",
+    53→    53→  space: "",
+    54→    54→  rooms: "",
+    55→    55→  feature: "",
+    56→    56→  price: "",
+    57→    57→};
+    58→    58→
+    59→    59→const PLATFORM_COLORS: Record<string, string> = {
+    60→    60→  واتساب: "#25D366",
+    61→    61→  إنستغرام: "#E1306C",
+    62→    62→  "تويتر / X": "#000000",
+    63→    63→  لينكدإن: "#0A66C2",
+    64→    64→};
+    65→    65→
+    66→    66→const PAIN_POINTS = [
+    67→    67→  {
+    68→    68→    icon: <Clock className="w-6 h-6 text-red-400" />,
+    69→    69→    title: "ساعات مهدورة",
+    70→    70→    desc: "تقضي ساعة في كتابة وصف واحد — والمنافسون ينشرون 10 إعلانات في نفس الوقت",
+    71→    71→  },
+    72→    72→  {
+    73→    73→    icon: <HandCoins className="w-6 h-6 text-red-400" />,
+    74→    74→    title: "تكاليف عالية بلا ضمان",
+    75→    75→    desc: "وكالات التسويق تأخذ مبالغ شهرية ثابتة — بلا ضمان جودة أو نتيجة",
+    76→    76→  },
+    77→    77→  {
+    78→    78→    icon: <Eye className="w-6 h-6 text-red-400" />,
+    79→    79→    title: "إعلانات لا يراها أحد",
+    80→    80→    desc: "محتوى ضعيف = صفر تفاعل = عقارك يضيع بين آلاف الإعلانات",
+    81→    81→  },
+    82→    82→];
+    83→    83→
+    84→    84→const BEFORE_AFTER = [
+    85→    85→  { label: "كتابة وصف عقار", before: "45 دقيقة", after: "7 ثوانٍ" },
+    86→    86→  { label: "تكييف لكل منصة", before: "إعادة كتابة 4 مرات", after: "تلقائي" },
+    87→    87→  { label: "اختيار هاشتاجات", before: "بحث يدوي", after: "ذكي ومدروس" },
+    88→    88→  { label: "التكلفة الشهرية", before: "$500+ وكالة", after: "مجاناً" },
+    89→    89→];
+    90→    90→
+    91→    91→const TESTIMONIALS = [
+    92→    92→  {
+    93→    93→    name: "أحمد الرشيدي",
+    94→    94→    role: "وكيل عقاري · الرياض",
+    95→    95→    text: "كنت أقضي ساعة على وصف كل عقار، الآن أنشر لـ٥ عقارات في نفس الوقت بجودة أفضل. وفّر عليّ تكلفة مصمم ومونتاج.",
+    96→    96→    avatar: "👨‍💼",
+    97→    97→  },
+    98→    98→  {
+    99→    99→    name: "نورة الشامسي",
+   100→   100→    role: "مستثمرة عقارية · دبي",
+   101→   101→    text: "المحتوى يطلع بلهجة الإمارات وبأسلوب يستهدف المستثمر تحديداً. الواتساب صار يرنّ أكثر بعد كل منشور!",
+   102→   102→    avatar: "👩‍💼",
+   103→   103→  },
+   104→   104→  {
+   105→   105→    name: "خالد العتيبي",
+   106→   106→    role: "مسؤول تسويق · الدوحة",
+   107→   107→    text: "جربنا كتابة محتوى لـ٣ منصات بنفس العقار — كل وحدة مظبوطة للمنصة. تويتر قصير، لينكدين رسمي، واتساب تفصيلي.",
+   108→   108→    avatar: "👨‍💻",
+   109→   109→  },
+   110→   110→];
+   111→   111→
+   112→   112→const CITIES = {
+   113→   113→  السعودية: ["الرياض", "جدة", "مكة المكرمة", "الدمام", "المدينة المنورة", "الخبر"],
+   114→   114→  الإمارات: ["دبي", "أبوظبي", "الشارقة", "عجمان", "رأس الخيمة"],
+   115→   115→  الخليج: ["الدوحة", "الكويت", "مسقط", "المنامة"],
+   116→   116→  أخرى: ["القاهرة", "عمّان", "بيروت", "الدار البيضاء"],
+   117→   117→};
+   118→   118→
+   119→   119→const PROP_TYPES = {
+   120→   120→  سكني: ["شقة", "فيلا", "استوديو", "بنتهاوس", "دوبلكس", "شاليه", "عمارة سكنية"],
+   121→   121→  تجاري: ["محل تجاري", "مكتب تجاري"],
+   122→   122→  أراضي: ["أرض سكنية", "أرض تجارية"],
+   123→   123→};
+   124→   124→
+   125→   125→const FEATURES = [
+   126→   126→  "إطلالة بحرية",
+   127→   127→  "إطلالة على الحديقة",
+   128→   128→  "موقع مميز",
+   129→   129→  "تشطيب فاخر",
+   130→   130→  "قريب من المسجد",
+   131→   131→  "قريب من المدارس",
+   132→   132→  "مسبح خاص",
+   133→   133→  "فرصة استثمارية",
+   134→   134→  "تسليم فوري",
+   135→   135→];
+   136→   136→
+   137→   137→// ─── Hooks ─────────────────────────────────────────────────
+   138→   138→function useUserCounter() {
+   139→   139→  const [count, setCount] = useState(2847);
+   140→   140→  const mountedRef = useRef(false);
+   141→   141→  const increment = useCallback(
+   142→   142→    () => setCount((prev) => prev + 1 + Math.floor(Math.random() * 2)),
+   143→   143→    []
+   144→   144→  );
+   145→   145→  useEffect(() => {
+   146→   146→    mountedRef.current = true;
+   147→   147→    const delay = 8000 + Math.floor(Math.random() * 12000);
+   148→   148→    const interval = setInterval(increment, delay);
+   149→   149→    return () => clearInterval(interval);
+   150→   150→  }, [increment]);
+   151→   151→  return count;
+   152→   152→}
+   153→   153→
+   154→   154→function useCountdown() {
+   155→   155→  const STORAGE_KEY = "sada_countdown_end";
+   156→   156→  const TEN_DAYS_MS = 10 * 24 * 60 * 60 * 1000;
+   157→   157→  const INITIAL = { days: 10, hours: 0, minutes: 0, seconds: 0 };
+   158→   158→
+   159→   159→  const calcRemaining = useCallback((target: number) => {
+   160→   160→    const diff = Math.max(0, target - Date.now());
+   161→   161→    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+   162→   162→    const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+   163→   163→    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+   164→   164→    const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+   165→   165→    return { days, hours, minutes, seconds };
+   166→   166→  }, []);
+   167→   167→
+   168→   168→  const [timeLeft, setTimeLeft] = useState(INITIAL);
+   169→   169→  const targetRef = useRef<number | null>(null);
+   170→   170→
+   171→   171→  useEffect(() => {
+   172→   172→    let target: number;
+   173→   173→    const stored = localStorage.getItem(STORAGE_KEY);
+   174→   174→    if (stored) {
+   175→   175→      const end = parseInt(stored, 10);
+   176→   176→      if (end > Date.now()) {
+   177→   177→        target = end;
+   178→   178→      } else {
+   179→   179→        target = Date.now() + TEN_DAYS_MS;
+   180→   180→        localStorage.setItem(STORAGE_KEY, String(target));
+   181→   181→      }
+   182→   182→    } else {
+   183→   183→      target = Date.now() + TEN_DAYS_MS;
+   184→   184→      localStorage.setItem(STORAGE_KEY, String(target));
+   185→   185→    }
+   186→   186→    targetRef.current = target;
+   187→   187→
+   188→   188→    // Use requestAnimationFrame to defer setState out of sync effect body
+   189→   189→    const raf = requestAnimationFrame(() => {
+   190→   190→      setTimeLeft(calcRemaining(target));
+   191→   191→    });
+   192→   192→
+   193→   193→    const timer = setInterval(() => {
+   194→   194→      if (targetRef.current) {
+   195→   195→        setTimeLeft(calcRemaining(targetRef.current));
+   196→   196→      }
+   197→   197→    }, 1000);
+   198→   198→    return () => {
+   199→   199→      cancelAnimationFrame(raf);
+   200→   200→      clearInterval(timer);
+   201→   201→    };
+   202→   202→  }, [calcRemaining]);
+   203→   203→
+   204→   204→  return timeLeft;
+   205→   205→}
+   206→   206→
+   207→   207→// ─── Main Page ─────────────────────────────────────────────
+   208→   208→export default function SadaLandingPage() {
+   209→   209→  const [formStep, setFormStep] = useState<"form" | "loading" | "results">("form");
+   210→   210→  const [formData, setFormData] = useState<FormData>(INITIAL_FORM);
+   211→   211→  const [titles, setTitles] = useState<TitleResult[]>([]);
+   212→   212→  const [error, setError] = useState("");
+   213→   213→  const [copiedIdx, setCopiedIdx] = useState<number | null>(null);
+   214→   214→  const [remainingUses, setRemainingUses] = useState<number | null>(null);
+   215→   215→  const [limitReached, setLimitReached] = useState(false);
+   216→   216→
+   217→   217→  const userCount = useUserCounter();
+   218→   218→  const countdown = useCountdown();
+   219→   219→
+   220→   220→  const handleFormChange = useCallback(
+   221→   221→    (field: keyof FormData, value: string) => {
+   222→   222→      setFormData((prev) => ({ ...prev, [field]: value }));
+   223→   223→      setError("");
+   224→   224→    },
+   225→   225→    []
+   226→   226→  );
+   227→   227→
+   228→   228→  const validateForm = (): boolean => {
+   229→   229→    if (!formData.propType || !formData.purpose || !formData.city) {
+   230→   230→      setError("يرجى اختيار نوع العقار والغرض والمدينة على الأقل");
+   231→   231→      return false;
+   232→   232→    }
+   233→   233→    return true;
+   234→   234→  };
+   235→   235→
+   236→   236→  const handleGenerate = async () => {
+   237→   237→    if (!validateForm()) return;
+   238→   238→    if (limitReached) {
+   239→   239→      window.open("https://sada-elaqar.vercel.app", "_blank");
+   240→   240→      return;
+   241→   241→    }
+   242→   242→
+   243→   243→    setFormStep("loading");
+   244→   244→    setError("");
+   245→   245→
+   246→   246→    try {
+   247→   247→      const res = await fetch("/api/generate-titles", {
+   248→   248→        method: "POST",
+   249→   249→        headers: { "Content-Type": "application/json" },
+   250→   250→        body: JSON.stringify(formData),
+   251→   251→      });
+   252→   252→
+   253→   253→      const data = await res.json();
+   254→   254→
+   255→   255→      // Handle rate limit
+   256→   256→      if (res.status === 429) {
+   257→   257→        setLimitReached(true);
+   258→   258→        setError(data.message || "تم الوصول للحد اليومي");
+   259→   259→        setFormStep("form");
+   260→   260→        return;
+   261→   261→      }
+   262→   262→
+   263→   263→      if (!res.ok) {
+   264→   264→        throw new Error(data.error || "حدث خطأ");
+   265→   265→      }
+   266→   266→
+   267→   267→      setTitles(data.titles);
+   268→   268→      if (data._meta?.remaining !== undefined) {
+   269→   269→        setRemainingUses(data._meta.remaining);
+   270→   270→      }
+   271→   271→      setFormStep("results");
+   272→   272→    } catch (err: unknown) {
+   273→   273→      const message = err instanceof Error ? err.message : "حدث خطأ أثناء التوليد";
+   274→   274→      setError(message);
+   275→   275→      setFormStep("form");
+   276→   276→    }
+   277→   277→  };
+   278→   278→
+   279→   279→  const handleCopy = (text: string, idx: number) => {
+   280→   280→    navigator.clipboard.writeText(text);
+   281→   281→    setCopiedIdx(idx);
+   282→   282→    setTimeout(() => setCopiedIdx(null), 2200);
+   283→   283→  };
+   284→   284→
+   285→   285→  const handleReset = () => {
+   286→   286→    setFormData(INITIAL_FORM);
+   287→   287→    setTitles([]);
+   288→   288→    setFormStep("form");
+   289→   289→    setError("");
+   290→   290→  };
+   291→   291→
+   292→   292→  const MAIN_CTA_URL = "https://sada-elaqar.vercel.app";
+   293→   293→
+   294→   294→  return (
+   295→   295→    <div className="min-h-screen flex flex-col">
+   296→   296→      {/* ── HEADER ── */}
+   297→   297→      <header className="bg-[#0f1117] px-4 sm:px-6 py-4 flex items-center justify-between sticky top-0 z-50">
+   298→   298→        <a
+   299→   299→          href={MAIN_CTA_URL}
+   300→   300→          target="_blank"
+   301→   301→          rel="noopener noreferrer"
+   302→   302→          className="flex items-center gap-3 no-underline"
+   303→   303→        >
+   304→   304→          <div className="w-9 h-9 bg-[#c9a84c] rounded-full flex items-center justify-center flex-shrink-0">
+   305→   305→            <Home className="w-4 h-4 text-[#0f1117]" />
+   306→   306→          </div>
+   307→   307→          <div>
+   308→   308→            <div className="text-white font-bold text-base leading-tight">صدى العقار</div>
+   309→   309→            <div className="text-white/40 text-xs font-light">مساعد التسويق العقاري</div>
+   310→   310→          </div>
+   311→   311→        </a>
+   312→   312→        <div className="flex items-center gap-3">
+   313→   313→          <div className="hidden sm:flex items-center gap-1.5 text-white/50 text-xs">
+   314→   314→            <Users className="w-3.5 h-3.5" />
+   315→   315→            <span>{userCount.toLocaleString("ar-SA")} مستخدم</span>
+   316→   316→          </div>
+   317→   317→          <a
+   318→   318→            href={MAIN_CTA_URL}
+   319→   319→            target="_blank"
+   320→   320→            rel="noopener noreferrer"
+   321→   321→            className="bg-[#c9a84c] text-[#0f1117] font-bold text-sm px-4 py-2 rounded-lg no-underline hover:opacity-90 transition-opacity whitespace-nowrap flex items-center gap-1.5"
+   322→   322→          >
+   323→   323→            جرّب النسخة الكاملة
+   324→   324→            <ExternalLink className="w-3.5 h-3.5" />
+   325→   325→          </a>
+   326→   326→        </div>
+   327→   327→      </header>
+   328→   328→
+   329→   329→      {/* ── HERO: THE HOOK ── */}
+   330→   330→      <section className="bg-[#0f1117] pt-10 pb-20 px-5 text-center relative overflow-hidden">
+   331→   331→        <div className="absolute top-[-80px] left-1/2 -translate-x-1/2 w-[500px] h-[500px] bg-[rgba(201,168,76,0.15)] rounded-full pointer-events-none" />
+   332→   332→
+   333→   333→        <motion.div
+   334→   334→          initial={{ opacity: 0, y: 20 }}
+   335→   335→          animate={{ opacity: 1, y: 0 }}
+   336→   336→          transition={{ duration: 0.6 }}
+   337→   337→        >
+   338→   338→          {/* Urgency Badge */}
+   339→   339→          <div className="inline-flex items-center gap-2 bg-[#c9a84c]/10 border border-[#c9a84c]/30 text-[#c9a84c] rounded-full px-4 py-1.5 text-xs font-bold mb-5">
+   340→   340→            <Zap className="w-3.5 h-3.5" />
+   341→   341→            <span>عرض لفترة محدودة — مجاناً بالكامل</span>
+   342→   342→            <div className="flex gap-1 mr-1 items-center">
+   343→   343→              <span className="bg-[#c9a84c] text-[#0f1117] px-2 py-0.5 rounded text-[10px] font-black">
+   344→   344→                {countdown.days}
+   345→   345→              </span>
+   346→   346→              <span className="text-[#c9a84c] text-[9px]">يوم</span>
+   347→   347→              <span className="text-[#c9a84c]">:</span>
+   348→   348→              <span className="bg-[#c9a84c] text-[#0f1117] px-1.5 py-0.5 rounded text-[10px] font-black">
+   349→   349→                {String(countdown.hours).padStart(2, "0")}
+   350→   350→              </span>
+   351→   351→              <span className="text-[#c9a84c]">:</span>
+   352→   352→              <span className="bg-[#c9a84c] text-[#0f1117] px-1.5 py-0.5 rounded text-[10px] font-black">
+   353→   353→                {String(countdown.minutes).padStart(2, "0")}
+   354→   354→              </span>
+   355→   355→              <span className="text-[#c9a84c]">:</span>
+   356→   356→              <span className="bg-[#c9a84c] text-[#0f1117] px-1.5 py-0.5 rounded text-[10px] font-black">
+   357→   357→                {String(countdown.seconds).padStart(2, "0")}
+   358→   358→              </span>
+   359→   359→            </div>
+   360→   360→          </div>
+   361→   361→
+   362→   362→          {/* Hook Headline */}
+   363→   363→          <h1 className="text-white text-2xl sm:text-4xl lg:text-5xl font-black leading-snug max-w-2xl mx-auto mb-4">
+   364→   364→            هل تعاني من تسويق عقاراتك
+   365→   365→            <br />
+   366→   366→            <span className="text-[#c9a84c]">يدوياً وبجهد كبير؟</span>
+   367→   367→          </h1>
+   368→   368→
+   369→   369→          {/* Sub-hook */}
+   370→   370→          <p className="text-white/50 text-base sm:text-lg max-w-xl mx-auto leading-relaxed mb-6">
+   371→   371→            جرّب الآن — أدخل بيانات عقارك وشاهد كيف يحوّلها الذكاء الاصطناعي إلى عناوين تسويقية محترفة في <span className="text-[#c9a84c] font-bold">7 ثوانٍ فقط</span>
+   372→   372→          </p>
+   373→   373→
+   374→   374→          {/* Trust badges */}
+   375→   375→          <div className="flex flex-wrap items-center justify-center gap-4 text-white/40 text-xs">
+   376→   376→            <span className="flex items-center gap-1.5">
+   377→   377→              <Shield className="w-3.5 h-3.5 text-[#c9a84c]" /> بدون تسجيل
+   378→   378→            </span>
+   379→   379→            <span className="flex items-center gap-1.5">
+   380→   380→              <Clock className="w-3.5 h-3.5 text-[#c9a84c]" /> نتيجة فورية
+   381→   381→            </span>
+   382→   382→            <span className="flex items-center gap-1.5">
+   383→   383→              <Globe className="w-3.5 h-3.5 text-[#c9a84c]" /> بلهجة بلدك
+   384→   384→            </span>
+   385→   385→          </div>
+   386→   386→        </motion.div>
+   387→   387→      </section>
+   388→   388→
+   389→   389→      {/* ── PAIN POINTS ── */}
+   390→   390→      <section className="bg-[#fef2f2] py-10 px-5">
+   391→   391→        <div className="max-w-3xl mx-auto">
+   392→   392→          <motion.div
+   393→   393→            initial={{ opacity: 0 }}
+   394→   394→            whileInView={{ opacity: 1 }}
+   395→   395→            viewport={{ once: true }}
+   396→   396→            className="text-center mb-8"
+   397→   397→          >
+   398→   398→            <h2 className="text-xl sm:text-2xl font-black text-[#7f1d1d] mb-2">
+   399→   399→              قبل صدى العقار — هل تعاني من هذه المشاكل؟
+   400→   400→            </h2>
+   401→   401→          </motion.div>
+   402→   402→
+   403→   403→          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+   404→   404→            {PAIN_POINTS.map((item, idx) => (
+   405→   405→              <motion.div
+   406→   406→                key={idx}
+   407→   407→                initial={{ opacity: 0, y: 15 }}
+   408→   408→                whileInView={{ opacity: 1, y: 0 }}
+   409→   409→                viewport={{ once: true }}
+   410→   410→                transition={{ delay: idx * 0.1 }}
+   411→   411→                className="bg-white rounded-2xl p-5 border border-red-100 shadow-sm"
+   412→   412→              >
+   413→   413→                <div className="w-10 h-10 bg-red-50 rounded-xl flex items-center justify-center mb-3">
+   414→   414→                  {item.icon}
+   415→   415→                </div>
+   416→   416→                <h3 className="font-bold text-[#991b1b] text-sm mb-1">{item.title}</h3>
+   417→   417→                <p className="text-xs text-[#7f1d1d]/70 leading-relaxed">{item.desc}</p>
+   418→   418→              </motion.div>
+   419→   419→            ))}
+   420→   420→          </div>
+   421→   421→        </div>
+   422→   422→      </section>
+   423→   423→
+   424→   424→      {/* ── INTERACTIVE DEMO TOOL ── */}
+   425→   425→      <section className="bg-[#f5f6fa] py-10 px-5" id="demo">
+   426→   426→        <div className="max-w-[680px] w-full mx-auto">
+   427→   427→          <motion.div
+   428→   428→            initial={{ opacity: 0 }}
+   429→   429→            whileInView={{ opacity: 1 }}
+   430→   430→            viewport={{ once: true }}
+   431→   431→            className="text-center mb-6"
+   432→   432→          >
+   433→   433→            <div className="inline-flex items-center gap-2 bg-[#c9a84c]/10 border border-[#c9a84c]/30 text-[#c9a84c] rounded-full px-3 py-1 text-xs font-bold mb-3">
+   434→   434→              <Sparkles className="w-3.5 h-3.5" />
+   435→   435→              جرّب بنفسك الآن
+   436→   436→            </div>
+   437→   437→            <h2 className="text-xl sm:text-2xl font-black text-[#0f1117] mb-2">
+   438→   438→              شاهد النتيجة <span className="text-[#c9a84c]">بعينيك</span> — مجاناً
+   439→   439→            </h2>
+   440→   440→            <p className="text-xs text-[#3a3d4a]">أدخل بيانات أي عقار واحصل على 4 عناوين تسويقية جاهزة للنشر</p>
+   441→   441→          </motion.div>
+   442→   442→
+   443→   443→          <motion.div
+   444→   444→            className="bg-white rounded-[20px] shadow-[0_12px_48px_rgba(15,17,23,0.14)] overflow-hidden"
+   445→   445→            initial={{ opacity: 0, y: 30 }}
+   446→   446→            whileInView={{ opacity: 1, y: 0 }}
+   447→   447→            viewport={{ once: true }}
+   448→   448→          >
+   449→   449→            {/* Card Header */}
+   450→   450→            <div className="bg-gradient-to-bl from-[#f5edda] to-[#fff8e8] border-b border-[#edddb0] px-6 py-4 flex items-center justify-between">
+   451→   451→              <div className="flex items-center gap-3">
+   452→   452→                <div className="w-10 h-10 bg-[#c9a84c] rounded-[10px] flex items-center justify-center flex-shrink-0">
+   453→   453→                  <Sparkles className="w-5 h-5 text-white" />
+   454→   454→                </div>
+   455→   455→                <div>
+   456→   456→                  <h3 className="text-sm font-bold text-[#0f1117]">مولّد العناوين العقارية</h3>
+   457→   457→                  <p className="text-[11px] text-[#3a3d4a]">بيانات العقار → 4 عناوين فورية</p>
+   458→   458→                </div>
+   459→   459→              </div>
+   460→   460→              {remainingUses !== null && remainingUses > 0 && (
+   461→   461→                <span className="text-[10px] text-[#3a3d4a] bg-[#f5f6fa] px-2.5 py-1 rounded-full font-semibold">
+   462→   462→                  متبقي {remainingUses} محاولات اليوم
+   463→   463→                </span>
+   464→   464→              )}
+   465→   465→            </div>
+   466→   466→
+   467→   467→            <AnimatePresence mode="wait">
+   468→   468→              {/* ── FORM ── */}
+   469→   469→              {formStep === "form" && (
+   470→   470→                <motion.div
+   471→   471→                  key="form"
+   472→   472→                  initial={{ opacity: 0 }}
+   473→   473→                  animate={{ opacity: 1 }}
+   474→   474→                  exit={{ opacity: 0 }}
+   475→   475→                  className="p-6"
+   476→   476→                >
+   477→   477→                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+   478→   478→                    {/* Property Type */}
+   479→   479→                    <div className="flex flex-col gap-1.5">
+   480→   480→                      <label className="text-sm font-bold text-[#3a3d4a] flex items-center gap-1.5">
+   481→   481→                        نوع العقار <span className="text-[#c9a84c]">*</span>
+   482→   482→                      </label>
+   483→   483→                      <div className="relative">
+   484→   484→                        <select
+   485→   485→                          value={formData.propType}
+   486→   486→                          onChange={(e) => handleFormChange("propType", e.target.value)}
+   487→   487→                          className="w-full text-sm bg-[#f5f6fa] border-[1.5px] border-[#e2e4ed] rounded-[14px] py-3 px-3.5 appearance-none cursor-pointer focus:border-[#c9a84c] focus:shadow-[0_0_0_3px_rgba(201,168,76,0.18)] focus:bg-white transition-all font-[Cairo]"
+   488→   488→                        >
+   489→   489→                          <option value="">— اختر —</option>
+   490→   490→                          {Object.entries(PROP_TYPES).map(([group, types]) => (
+   491→   491→                            <optgroup key={group} label={group}>
+   492→   492→                              {types.map((t) => (
+   493→   493→                                <option key={t} value={t}>{t}</option>
+   494→   494→                              ))}
+   495→   495→                            </optgroup>
+   496→   496→                          ))}
+   497→   497→                        </select>
+   498→   498→                        <ChevronDown className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#3a3d4a] pointer-events-none" />
+   499→   499→                      </div>
+   500→   500→                    </div>
+   501→   501→
+   502→   502→                    {/* Purpose */}
+   503→   503→                    <div className="flex flex-col gap-1.5">
+   504→   504→                      <label className="text-sm font-bold text-[#3a3d4a] flex items-center gap-1.5">
+   505→   505→                        الغرض <span className="text-[#c9a84c]">*</span>
+   506→   506→                      </label>
+   507→   507→                      <div className="relative">
+   508→   508→                        <select
+   509→   509→                          value={formData.purpose}
+   510→   510→                          onChange={(e) => handleFormChange("purpose", e.target.value)}
+   511→   511→                          className="w-full text-sm bg-[#f5f6fa] border-[1.5px] border-[#e2e4ed] rounded-[14px] py-3 px-3.5 appearance-none cursor-pointer focus:border-[#c9a84c] focus:shadow-[0_0_0_3px_rgba(201,168,76,0.18)] focus:bg-white transition-all font-[Cairo]"
+   512→   512→                        >
+   513→   513→                          <option value="">— اختر —</option>
+   514→   514→                          <option value="للبيع">للبيع</option>
+   515→   515→                          <option value="للإيجار">للإيجار</option>
+   516→   516→                          <option value="للاستثمار">للاستثمار</option>
+   517→   517→                        </select>
+   518→   518→                        <ChevronDown className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#3a3d4a] pointer-events-none" />
+   519→   519→                      </div>
+   520→   520→                    </div>
+   521→   521→
+   522→   522→                    {/* City */}
+   523→   523→                    <div className="flex flex-col gap-1.5">
+   524→   524→                      <label className="text-sm font-bold text-[#3a3d4a] flex items-center gap-1.5">
+   525→   525→                        المدينة <span className="text-[#c9a84c]">*</span>
+   526→   526→                      </label>
+   527→   527→                      <div className="relative">
+   528→   528→                        <select
+   529→   529→                          value={formData.city}
+   530→   530→                          onChange={(e) => handleFormChange("city", e.target.value)}
+   531→   531→                          className="w-full text-sm bg-[#f5f6fa] border-[1.5px] border-[#e2e4ed] rounded-[14px] py-3 px-3.5 appearance-none cursor-pointer focus:border-[#c9a84c] focus:shadow-[0_0_0_3px_rgba(201,168,76,0.18)] focus:bg-white transition-all font-[Cairo]"
+   532→   532→                        >
+   533→   533→                          <option value="">— اختر —</option>
+   534→   534→                          {Object.entries(CITIES).map(([group, cities]) => (
+   535→   535→                            <optgroup key={group} label={group}>
+   536→   536→                              {cities.map((c) => (
+   537→   537→                                <option key={c} value={c}>{c}</option>
+   538→   538→                              ))}
+   539→   539→                            </optgroup>
+   540→   540→                          ))}
+   541→   541→                        </select>
+   542→   542→                        <ChevronDown className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#3a3d4a] pointer-events-none" />
+   543→   543→                      </div>
+   544→   544→                    </div>
+   545→   545→
+   546→   546→                    {/* Area */}
+   547→   547→                    <div className="flex flex-col gap-1.5">
+   548→   548→                      <label className="text-sm font-bold text-[#3a3d4a]">الحي / المنطقة</label>
+   549→   549→                      <input
+   550→   550→                        type="text"
+   551→   551→                        value={formData.area}
+   552→   552→                        onChange={(e) => handleFormChange("area", e.target.value)}
+   553→   553→                        placeholder="مثال: حي النرجس"
+   554→   554→                        className="w-full text-sm bg-[#f5f6fa] border-[1.5px] border-[#e2e4ed] rounded-[14px] py-3 px-3.5 focus:border-[#c9a84c] focus:shadow-[0_0_0_3px_rgba(201,168,76,0.18)] focus:bg-white transition-all font-[Cairo] outline-none"
+   555→   555→                      />
+   556→   556→                    </div>
+   557→   557→                  </div>
+   558→   558→
+   559→   559→                  {/* Step Divider */}
+   560→   560→                  <div className="flex items-center gap-3 my-5 text-[#3a3d4a] text-xs font-semibold">
+   561→   561→                    <span className="flex-1 h-px bg-[#e2e4ed]" />
+   562→   562→                    تفاصيل إضافية (اختياري)
+   563→   563→                    <span className="flex-1 h-px bg-[#e2e4ed]" />
+   564→   564→                  </div>
+   565→   565→
+   566→   566→                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+   567→   567→                    <div className="flex flex-col gap-1.5">
+   568→   568→                      <label className="text-sm font-bold text-[#3a3d4a]">المساحة (م²)</label>
+   569→   569→                      <input
+   570→   570→                        type="text"
+   571→   571→                        value={formData.space}
+   572→   572→                        onChange={(e) => handleFormChange("space", e.target.value)}
+   573→   573→                        placeholder="مثال: 150"
+   574→   574→                        className="w-full text-sm bg-[#f5f6fa] border-[1.5px] border-[#e2e4ed] rounded-[14px] py-3 px-3.5 focus:border-[#c9a84c] focus:shadow-[0_0_0_3px_rgba(201,168,76,0.18)] focus:bg-white transition-all font-[Cairo] outline-none"
+   575→   575→                      />
+   576→   576→                    </div>
+   577→   577→                    <div className="flex flex-col gap-1.5">
+   578→   578→                      <label className="text-sm font-bold text-[#3a3d4a]">عدد الغرف</label>
+   579→   579→                      <div className="relative">
+   580→   580→                        <select
+   581→   581→                          value={formData.rooms}
+   582→   582→                          onChange={(e) => handleFormChange("rooms", e.target.value)}
+   583→   583→                          className="w-full text-sm bg-[#f5f6fa] border-[1.5px] border-[#e2e4ed] rounded-[14px] py-3 px-3.5 appearance-none cursor-pointer focus:border-[#c9a84c] focus:shadow-[0_0_0_3px_rgba(201,168,76,0.18)] focus:bg-white transition-all font-[Cairo]"
+   584→   584→                        >
+   585→   585→                          <option value="">—</option>
+   586→   586→                          <option>استوديو</option>
+   587→   587→                          <option>غرفة واحدة</option>
+   588→   588→                          <option>غرفتان</option>
+   589→   589→                          <option>3 غرف</option>
+   590→   590→                          <option>4 غرف</option>
+   591→   591→                          <option>5 غرف وأكثر</option>
+   592→   592→                        </select>
+   593→   593→                        <ChevronDown className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#3a3d4a] pointer-events-none" />
+   594→   594→                      </div>
+   595→   595→                    </div>
+   596→   596→                    <div className="flex flex-col gap-1.5">
+   597→   597→                      <label className="text-sm font-bold text-[#3a3d4a]">ميزة بارزة</label>
+   598→   598→                      <div className="relative">
+   599→   599→                        <select
+   600→   600→                          value={formData.feature}
+   601→   601→                          onChange={(e) => handleFormChange("feature", e.target.value)}
+   602→   602→                          className="w-full text-sm bg-[#f5f6fa] border-[1.5px] border-[#e2e4ed] rounded-[14px] py-3 px-3.5 appearance-none cursor-pointer focus:border-[#c9a84c] focus:shadow-[0_0_0_3px_rgba(201,168,76,0.18)] focus:bg-white transition-all font-[Cairo]"
+   603→   603→                        >
+   604→   604→                          <option value="">— اختر إن وجد —</option>
+   605→   605→                          {FEATURES.map((f) => (
+   606→   606→                            <option key={f} value={f}>{f}</option>
+   607→   607→                          ))}
+   608→   608→                        </select>
+   609→   609→                        <ChevronDown className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#3a3d4a] pointer-events-none" />
+   610→   610→                      </div>
+   611→   611→                    </div>
+   612→   612→                    <div className="flex flex-col gap-1.5">
+   613→   613→                      <label className="text-sm font-bold text-[#3a3d4a]">السعر</label>
+   614→   614→                      <input
+   615→   615→                        type="text"
+   616→   616→                        value={formData.price}
+   617→   617→                        onChange={(e) => handleFormChange("price", e.target.value)}
+   618→   618→                        placeholder="مثال: 850,000 ريال"
+   619→   619→                        className="w-full text-sm bg-[#f5f6fa] border-[1.5px] border-[#e2e4ed] rounded-[14px] py-3 px-3.5 focus:border-[#c9a84c] focus:shadow-[0_0_0_3px_rgba(201,168,76,0.18)] focus:bg-white transition-all font-[Cairo] outline-none"
+   620→   620→                      />
+   621→   621→                    </div>
+   622→   622→                  </div>
+   623→   623→
+   624→   624→                  {/* Error */}
+   625→   625→                  {error && (
+   626→   626→                    <motion.div
+   627→   627→                      initial={{ opacity: 0, y: -5 }}
+   628→   628→                      animate={{ opacity: 1, y: 0 }}
+   629→   629→                      className={`mt-4 rounded-xl px-4 py-3 text-sm text-center ${
+   630→   630→                        limitReached
+   631→   631→                          ? "bg-[#c9a84c]/10 border border-[#c9a84c]/30 text-[#c9a84c]"
+   632→   632→                          : "bg-red-50 border border-red-200 text-red-700"
+   633→   633→                      }`}
+   634→   634→                    >
+   635→   635→                      {limitReached ? (
+   636→   636→                        <span className="flex items-center justify-center gap-2">
+   637→   637→                          <AlertTriangle className="w-4 h-4" />
+   638→   638→                          {error}
+   639→   639→                          <a
+   640→   640→                            href={MAIN_CTA_URL}
+   641→   641→                            target="_blank"
+   642→   642→                            rel="noopener noreferrer"
+   643→   643→                            className="underline font-bold"
+   644→   644→                          >
+   645→   645→                            جرّب النسخة الكاملة ←
+   646→   646→                          </a>
+   647→   647→                        </span>
+   648→   648→                      ) : (
+   649→   649→                        `⚠️ ${error}`
+   650→   650→                      )}
+   651→   651→                    </motion.div>
+   652→   652→                  )}
+   653→   653→
+   654→   654→                  {/* Generate Button */}
+   655→   655→                  <button
+   656→   656→                    onClick={handleGenerate}
+   657→   657→                    className="w-full mt-6 bg-[#c9a84c] text-[#0f1117] font-black text-base py-4 rounded-[14px] cursor-pointer flex items-center justify-center gap-2.5 transition-all hover:-translate-y-0.5 hover:shadow-[0_8px_28px_rgba(201,168,76,0.45)] active:translate-y-0 shadow-[0_4px_20px_rgba(201,168,76,0.35)]"
+   658→   658→                  >
+   659→   659→                    <Zap className="w-5 h-5" />
+   660→   660→                    {limitReached ? "جرّب النسخة الكاملة — بدون حدود" : "أنشئ العناوين التسويقية الآن"}
+   661→   661→                  </button>
+   662→   662→                </motion.div>
+   663→   663→              )}
+   664→   664→
+   665→   665→              {/* ── LOADING ── */}
+   666→   666→              {formStep === "loading" && (
+   667→   667→                <motion.div
+   668→   668→                  key="loading"
+   669→   669→                  initial={{ opacity: 0 }}
+   670→   670→                  animate={{ opacity: 1 }}
+   671→   671→                  exit={{ opacity: 0 }}
+   672→   672→                  className="flex flex-col items-center py-12 px-5 gap-4"
+   673→   673→                >
+   674→   674→                  <div className="w-11 h-11 border-[3px] border-[#e2e4ed] border-t-[#c9a84c] rounded-full animate-spin" />
+   675→   675→                  <div className="text-[#3a3d4a] font-semibold text-sm">صدى العقار يكتب لك...</div>
+   676→   676→                  <div className="text-[#aaa] text-xs">يحلّل البيانات ويصيغ أفضل العناوين</div>
+   677→   677→                </motion.div>
+   678→   678→              )}
+   679→   679→
+   680→   680→              {/* ── RESULTS ── */}
+   681→   681→              {formStep === "results" && (
+   682→   682→                <motion.div
+   683→   683→                  key="results"
+   684→   684→                  initial={{ opacity: 0 }}
+   685→   685→                  animate={{ opacity: 1 }}
+   686→   686→                  exit={{ opacity: 0 }}
+   687→   687→                  className="p-6"
+   688→   688→                >
+   689→   689→                  <div className="flex items-center gap-2 mb-4">
+   690→   690→                    <span className="text-xs font-bold text-[#c9a84c] tracking-wider uppercase">
+   691→   691→                      العناوين التسويقية الجاهزة
+   692→   692→                    </span>
+   693→   693→                    <span className="flex-1 h-px bg-[#edddb0]" />
+   694→   694→                  </div>
+   695→   695→
+   696→   696→                  <div className="flex flex-col gap-3">
+   697→   697→                    {titles.map((item, idx) => (
+   698→   698→                      <motion.div
+   699→   699→                        key={idx}
+   700→   700→                        initial={{ opacity: 0, x: 20 }}
+   701→   701→                        animate={{ opacity: 1, x: 0 }}
+   702→   702→                        transition={{ delay: idx * 0.1 }}
+   703→   703→                        onClick={() => handleCopy(item.title, idx)}
+   704→   704→                        className={`relative bg-[#f5f6fa] border-[1.5px] rounded-[14px] p-4 cursor-pointer transition-all hover:border-[#c9a84c] hover:shadow-[0_0_0_3px_rgba(201,168,76,0.18)] ${
+   705→   705→                          copiedIdx === idx
+   706→   706→                            ? "border-green-400 shadow-[0_0_0_3px_rgba(34,197,94,0.15)]"
+   707→   707→                            : "border-[#e2e4ed]"
+   708→   708→                        }`}
+   709→   709→                      >
+   710→   710→                        <span
+   711→   711→                          className="inline-block text-[10px] font-bold text-white rounded-md px-2.5 py-1 mb-2.5"
+   712→   712→                          style={{ background: PLATFORM_COLORS[item.platform] || "#333" }}
+   713→   713→                        >
+   714→   714→                          {item.platform}
+   715→   715→                        </span>
+   716→   716→                        <div className="text-sm font-bold text-[#0f1117] leading-relaxed">
+   717→   717→                          {item.title}
+   718→   718→                        </div>
+   719→   719→                        <div className="absolute left-3.5 top-3.5 flex items-center gap-1 text-[#aaa] text-[10px]">
+   720→   720→                          {copiedIdx === idx ? (
+   721→   721→                            <span className="text-green-500 font-bold flex items-center gap-1">
+   722→   722→                              <Check className="w-3.5 h-3.5" /> تم النسخ
+   723→   723→                            </span>
+   724→   724→                          ) : (
+   725→   725→                            <span className="flex items-center gap-1">
+   726→   726→                              <Copy className="w-3.5 h-3.5" /> انقر للنسخ
+   727→   727→                            </span>
+   728→   728→                          )}
+   729→   729→                        </div>
+   730→   730→                      </motion.div>
+   731→   731→                    ))}
+   732→   732→                  </div>
+   733→   733→
+   734→   734→                  {/* Upsell Banner */}
+   735→   735→                  <motion.div
+   736→   736→                    initial={{ opacity: 0, y: 10 }}
+   737→   737→                    animate={{ opacity: 1, y: 0 }}
+   738→   738→                    transition={{ delay: 0.5 }}
+   739→   739→                    className="mt-6 bg-gradient-to-bl from-[#0f1117] to-[#1e2235] rounded-2xl p-6 text-center relative overflow-hidden"
+   740→   740→                  >
+   741→   741→                    <div className="absolute top-[-30px] right-[-30px] w-[120px] h-[120px] bg-[rgba(201,168,76,0.15)] rounded-full pointer-events-none" />
+   742→   742→                    <h3 className="text-white text-base font-extrabold mb-2">
+   743→   743→                      🚀 أعجبتك النتيجة؟ النسخة الكاملة تفعل أكثر بكثير
+   744→   744→                    </h3>
+   745→   745→                    <p className="text-white/50 text-sm leading-relaxed mb-4 max-w-sm mx-auto">
+   746→   746→                      وصف عقاري كامل · هاشتاجات احترافية · محتوى لكل منصة · منشور واتساب جاهز · تصاميم احترافية
+   747→   747→                    </p>
+   748→   748→                    <div className="flex flex-wrap justify-center gap-2 mb-5">
+   749→   749→                      {["📝 وصف تسويقي كامل", "# هاشتاجات ذكية", "📱 منشور إنستغرام", "💬 رسالة واتساب", "💼 منشور لينكدإن", "🎨 تصاميم جاهزة"].map((feat) => (
+   750→   750→                        <span key={feat} className="bg-[rgba(201,168,76,0.12)] border border-[rgba(201,168,76,0.3)] text-[#c9a84c] text-xs font-semibold px-3 py-1.5 rounded-full">
+   751→   751→                          {feat}
+   752→   752→                        </span>
+   753→   753→                      ))}
+   754→   754→                    </div>
+   755→   755→                    <a
+   756→   756→                      href={MAIN_CTA_URL}
+   757→   757→                      target="_blank"
+   758→   758→                      rel="noopener noreferrer"
+   759→   759→                      className="inline-flex items-center gap-2 bg-[#c9a84c] text-[#0f1117] font-black text-sm px-7 py-3 rounded-[14px] no-underline transition-all hover:-translate-y-0.5 hover:shadow-[0_8px_28px_rgba(201,168,76,0.45)] shadow-[0_4px_20px_rgba(201,168,76,0.35)]"
+   760→   760→                    >
+   761→   761→                      جرّب النسخة الكاملة مجاناً
+   762→   762→                      <ArrowLeft className="w-4 h-4" />
+   763→   763→                    </a>
+   764→   764→                  </motion.div>
+   765→   765→
+   766→   766→                  {/* Share + Try Again */}
+   767→   767→                  <div className="flex items-center justify-center gap-3 mt-5 pt-5 border-t border-[#e2e4ed]">
+   768→   768→                    <span className="text-xs text-[#3a3d4a] font-semibold">أعجبتك الأداة؟ شارك زملاءك:</span>
+   769→   769→                    <a
+   770→   770→                      href={`https://wa.me/?text=${encodeURIComponent(
+   771→   771→                        `🏠 جرّبت أداة مجانية تكتب عناوين تسويقية لأي عقار في 7 ثوانٍ!\n\nجرّبها مجاناً 👇\n${MAIN_CTA_URL}`
+   772→   772→                      )}`}
+   773→   773→                      target="_blank"
+   774→   774→                      rel="noopener noreferrer"
+   775→   775→                      className="inline-flex items-center gap-1.5 bg-[#25D366] text-white text-xs font-bold px-4 py-2.5 rounded-xl no-underline hover:opacity-90 transition-opacity"
+   776→   776→                    >
+   777→   777→                      <MessageCircle className="w-4 h-4" />
+   778→   778→                      شارك عبر واتساب
+   779→   779→                    </a>
+   780→   780→                  </div>
+   781→   781→
+   782→   782→                  <button
+   783→   783→                    onClick={handleReset}
+   784→   784→                    className="w-full mt-4 border-[1.5px] border-[#e2e4ed] text-[#3a3d4a] font-bold text-sm py-3 rounded-[14px] cursor-pointer hover:border-[#c9a84c] hover:text-[#c9a84c] transition-colors flex items-center justify-center gap-2"
+   785→   785→                  >
+   786→   786→                    <RotateCcw className="w-4 h-4" />
+   787→   787→                    أنشئ عناوين لعقار آخر
+   788→   788→                  </button>
+   789→   789→                </motion.div>
+   790→   790→              )}
+   791→   791→            </AnimatePresence>
+   792→   792→          </motion.div>
+   793→   793→        </div>
+   794→   794→      </section>
+   795→   795→
+   796→   796→      {/* ── BEFORE / AFTER ── */}
+   797→   797→      <section className="bg-white py-14 px-5">
+   798→   798→        <div className="max-w-3xl mx-auto">
+   799→   799→          <motion.div
+   800→   800→            initial={{ opacity: 0 }}
+   801→   801→            whileInView={{ opacity: 1 }}
+   802→   802→            viewport={{ once: true }}
+   803→   803→            className="text-center mb-8"
+   804→   804→          >
+   805→   805→            <h2 className="text-xl sm:text-2xl font-black text-[#0f1117] mb-2">
+   806→   806→              الفرق <span className="text-red-500">بدون</span> صدى العقار وبعده
+   807→   807→            </h2>
+   808→   808→          </motion.div>
+   809→   809→
+   810→   810→          <div className="overflow-x-auto">
+   811→   811→            <table className="w-full text-sm border-collapse">
+   812→   812→              <thead>
+   813→   813→                <tr className="border-b-2 border-[#e2e4ed]">
+   814→   814→                  <th className="py-3 px-4 text-right text-[#3a3d4a] font-semibold">المهمة</th>
+   815→   815→                  <th className="py-3 px-4 text-center text-red-500 font-semibold">قبل 😩</th>
+   816→   816→                  <th className="py-3 px-4 text-center text-[#0D7C66] font-semibold">بعد 🚀</th>
+   817→   817→                </tr>
+   818→   818→              </thead>
+   819→   819→              <tbody>
+   820→   820→                {BEFORE_AFTER.map((item, idx) => (
+   821→   821→                  <motion.tr
+   822→   822→                    key={idx}
+   823→   823→                    initial={{ opacity: 0, x: 10 }}
+   824→   824→                    whileInView={{ opacity: 1, x: 0 }}
+   825→   825→                    viewport={{ once: true }}
+   826→   826→                    transition={{ delay: idx * 0.08 }}
+   827→   827→                    className="border-b border-[#e2e4ed]"
+   828→   828→                  >
+   829→   829→                    <td className="py-3 px-4 font-semibold text-[#0f1117]">{item.label}</td>
+   830→   830→                    <td className="py-3 px-4 text-center text-red-400 text-xs">{item.before}</td>
+   831→   831→                    <td className="py-3 px-4 text-center text-[#0D7C66] font-bold text-xs">{item.after}</td>
+   832→   832→                  </motion.tr>
+   833→   833→                ))}
+   834→   834→              </tbody>
+   835→   835→            </table>
+   836→   836→          </div>
+   837→   837→        </div>
+   838→   838→      </section>
+   839→   839→
+   840→   840→      {/* ── TESTIMONIALS ── */}
+   841→   841→      <section className="bg-[#f5f6fa] py-14 px-5">
+   842→   842→        <div className="max-w-4xl mx-auto">
+   843→   843→          <motion.div
+   844→   844→            initial={{ opacity: 0 }}
+   845→   845→            whileInView={{ opacity: 1 }}
+   846→   846→            viewport={{ once: true }}
+   847→   847→            className="text-center mb-8"
+   848→   848→          >
+   849→   849→            <h2 className="text-xl sm:text-2xl font-black text-[#0f1117] mb-2">
+   850→   850→              وكلاء عقاريون يحدّثونك عن <span className="text-[#c9a84c]">تجربتهم</span>
+   851→   851→            </h2>
+   852→   852→          </motion.div>
+   853→   853→
+   854→   854→          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+   855→   855→            {TESTIMONIALS.map((t, idx) => (
+   856→   856→              <motion.div
+   857→   857→                key={idx}
+   858→   858→                initial={{ opacity: 0, y: 20 }}
+   859→   859→                whileInView={{ opacity: 1, y: 0 }}
+   860→   860→                viewport={{ once: true }}
+   861→   861→                transition={{ delay: idx * 0.15 }}
+   862→   862→                className="bg-white rounded-2xl p-5 border border-[#e2e4ed]"
+   863→   863→              >
+   864→   864→                <div className="flex items-center gap-3 mb-3">
+   865→   865→                  <div className="w-10 h-10 bg-[#c9a84c]/10 rounded-full flex items-center justify-center text-lg">
+   866→   866→                    {t.avatar}
+   867→   867→                  </div>
+   868→   868→                  <div>
+   869→   869→                    <div className="text-sm font-bold text-[#0f1117]">{t.name}</div>
+   870→   870→                    <div className="text-xs text-[#3a3d4a]">{t.role}</div>
+   871→   871→                  </div>
+   872→   872→                </div>
+   873→   873→                <p className="text-sm text-[#3a3d4a] leading-relaxed">{t.text}</p>
+   874→   874→                <div className="flex gap-0.5 mt-3">
+   875→   875→                  {[1, 2, 3, 4, 5].map((s) => (
+   876→   876→                    <Star key={s} className="w-3.5 h-3.5 text-[#c9a84c] fill-[#c9a84c]" />
+   877→   877→                  ))}
+   878→   878→                </div>
+   879→   879→              </motion.div>
+   880→   880→            ))}
+   881→   881→          </div>
+   882→   882→        </div>
+   883→   883→      </section>
+   884→   884→
+   885→   885→      {/* ── SOCIAL PROOF NUMBERS ── */}
+   886→   886→      <section className="bg-[#0f1117] py-12 px-5">
+   887→   887→        <div className="max-w-4xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
+   888→   888→          {[
+   889→   889→            { icon: <Users className="w-6 h-6 text-[#c9a84c] mx-auto mb-2" />, num: "2,800+", label: "مستخدم نشط" },
+   890→   890→            { icon: <Building2 className="w-6 h-6 text-[#c9a84c] mx-auto mb-2" />, num: "11", label: "دولة عربية" },
+   891→   891→            { icon: <Zap className="w-6 h-6 text-[#c9a84c] mx-auto mb-2" />, num: "7 ثوانٍ", label: "للنتيجة" },
+   892→   892→            { icon: <BarChart3 className="w-6 h-6 text-[#c9a84c] mx-auto mb-2" />, num: "4", label: "منصات مدعومة" },
+   893→   893→          ].map((stat, idx) => (
+   894→   894→            <motion.div
+   895→   895→              key={idx}
+   896→   896→              initial={{ opacity: 0, y: 10 }}
+   897→   897→              whileInView={{ opacity: 1, y: 0 }}
+   898→   898→              viewport={{ once: true }}
+   899→   899→              transition={{ delay: idx * 0.1 }}
+   900→   900→            >
+   901→   901→              {stat.icon}
+   902→   902→              <div className="text-2xl font-black text-white mb-1">{stat.num}</div>
+   903→   903→              <div className="text-xs text-white/40">{stat.label}</div>
+   904→   904→            </motion.div>
+   905→   905→          ))}
+   906→   906→        </div>
+   907→   907→      </section>
+   908→   908→
+   909→   909→      {/* ── FINAL CTA ── */}
+   910→   910→      <section className="bg-gradient-to-b from-[#0f1117] to-[#1a1c2e] py-16 px-5 text-center relative overflow-hidden">
+   911→   911→        <div className="absolute top-[-50px] left-1/2 -translate-x-1/2 w-[400px] h-[400px] bg-[rgba(201,168,76,0.08)] rounded-full pointer-events-none" />
+   912→   912→
+   913→   913→        <motion.div
+   914→   914→          initial={{ opacity: 0 }}
+   915→   915→          whileInView={{ opacity: 1 }}
+   916→   916→          viewport={{ once: true }}
+   917→   917→          className="max-w-lg mx-auto relative z-10"
+   918→   918→        >
+   919→   919→          <h2 className="text-2xl sm:text-3xl font-black text-white mb-3">
+   920→   920→            جاهز لتسويق عقاري <span className="text-[#c9a84c]">أسرع وأقنع</span>؟
+   921→   921→          </h2>
+   922→   922→          <p className="text-white/50 text-sm leading-relaxed mb-6">
+   923→   923→            الأداة المجانية تعطيك عناوين فقط. النسخة الكاملة تعطيك وصفاً كاملاً، هاشتاجات، محتوى لكل منصة، وتصاميم احترافية — كل ذلك في 7 ثوانٍ.
+   924→   924→          </p>
+   925→   925→
+   926→   926→          <a
+   927→   927→            href={MAIN_CTA_URL}
+   928→   928→            target="_blank"
+   929→   929→            rel="noopener noreferrer"
+   930→   930→            className="inline-flex items-center gap-2 bg-[#c9a84c] text-[#0f1117] font-black text-base px-10 py-4 rounded-[14px] no-underline transition-all hover:-translate-y-1 hover:shadow-[0_12px_35px_rgba(201,168,76,0.5)] shadow-[0_4px_20px_rgba(201,168,76,0.35)] mb-4"
+   931→   931→          >
+   932→   932→            <TrendingUp className="w-5 h-5" />
+   933→   933→            جرّب صدى العقار الكامل — مجاناً
+   934→   934→          </a>
+   935→   935→
+   936→   936→          <p className="text-white/30 text-xs mt-3">
+   937→   937→            لا تحتاج بطاقة بنكية · سجّل وابدأ فوراً
+   938→   938→          </p>
+   939→   939→        </motion.div>
+   940→   940→      </section>
+   941→   941→
+   942→   942→      {/* ── FOOTER ── */}
+   943→   943→      <footer className="mt-auto text-center py-5 px-5 text-xs text-[#aaa] border-t border-[#e2e4ed] bg-white">
+   944→   944→        أداة مجانية من{" "}
+   945→   945→        <a href={MAIN_CTA_URL} target="_blank" rel="noopener noreferrer" className="text-[#c9a84c] no-underline">
+   946→   946→          صدى العقار
+   947→   947→        </a>{" "}
+   948→   948→        — مساعد التسويق العقاري للسوق العربي |{" "}
+   949→   949→        <a href={`${MAIN_CTA_URL}/privacy`} target="_blank" rel="noopener noreferrer" className="text-[#aaa] no-underline hover:text-[#c9a84c]">
+   950→   950→          سياسة الخصوصية
+   951→   951→        </a>
+   952→   952→      </footer>
+   953→   953→
+   954→   954→      {/* ── FLOATING WHATSAPP BUTTON ── */}
+   955→   955→      <a
+   956→   956→        href="https://wa.me/213696212465?text=مرحباً، أريد الاستفسار عن صدى العقار"
+   957→   957→        target="_blank"
+   958→   958→        rel="noopener noreferrer"
+   959→   959→        className="fixed bottom-6 left-6 z-50 w-14 h-14 bg-[#25D366] rounded-full flex items-center justify-center shadow-[0_4px_20px_rgba(37,211,102,0.4)] hover:scale-110 transition-transform"
+   960→   960→        title="تواصل عبر واتساب"
+   961→   961→      >
+   962→   962→        <Phone className="w-6 h-6 text-white" />
+   963→   963→      </a>
+   964→   964→    </div>
+   965→   965→  );
+   966→   966→}
+   967→   967→

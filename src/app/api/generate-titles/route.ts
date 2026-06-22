@@ -2,10 +2,92 @@ import { NextRequest, NextResponse } from "next/server";
 import ZAI from "z-ai-web-dev-sdk";
 import { db } from "@/lib/db";
 
+// ─── Invisible Smart Rate Limiting ──────────────────────────
+// Tracks daily usage; throttles automatically when demand is high
+// Per-IP limit + global daily limit with progressive slowdown
+
+const GLOBAL_DAILY_SOFT_LIMIT = 80;   // Start throttling (add delay)
+const GLOBAL_DAILY_HARD_LIMIT = 150;   // Block with "try full version" message
+const PER_IP_DAILY_LIMIT = 3;          // Max generations per IP per day
+
+// In-memory counter (resets on server restart — fine for daily limits)
+let dailyCount = 0;
+let dailyCountDate = new Date().toISOString().slice(0, 10);
+const ipCounts = new Map<string, { count: number; date: string }>();
+
+function getToday(): string {
+  return new Date().toISOString().slice(0, 10);
+}
+
+function checkDailyReset() {
+  const today = getToday();
+  if (today !== dailyCountDate) {
+    dailyCount = 0;
+    dailyCountDate = today;
+  }
+}
+
+function getIpCount(ip: string): number {
+  const entry = ipCounts.get(ip);
+  const today = getToday();
+  if (!entry || entry.date !== today) return 0;
+  return entry.count;
+}
+
+function incrementIpCount(ip: string) {
+  const today = getToday();
+  const entry = ipCounts.get(ip);
+  if (!entry || entry.date !== today) {
+    ipCounts.set(ip, { count: 1, date: today });
+  } else {
+    entry.count++;
+  }
+}
+
 export async function POST(req: NextRequest) {
   try {
+    // ── Rate Limiting ──
+    checkDailyReset();
+
+    const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim()
+      || req.headers.get("x-real-ip")
+      || "unknown";
+
+    // Per-IP check
+    const ipUsage = getIpCount(ip);
+    if (ipUsage >= PER_IP_DAILY_LIMIT) {
+      return NextResponse.json(
+        {
+          error: "limit_reached",
+          message: "لقد استخدمت حدودك اليومية من الأداة المجانية. جرّب النسخة الكاملة بدون حدود!",
+          redirect: "https://sada-elaqar.vercel.app",
+        },
+        { status: 429 }
+      );
+    }
+
+    // Global daily hard limit
+    if (dailyCount >= GLOBAL_DAILY_HARD_LIMIT) {
+      return NextResponse.json(
+        {
+          error: "daily_limit",
+          message: "تم الوصول للحد اليومي للأداة المجانية. النسخة الكاملة متاحة دائماً!",
+          redirect: "https://sada-elaqar.vercel.app",
+        },
+        { status: 429 }
+      );
+    }
+
+    // Progressive throttle: add artificial delay when approaching limits
+    if (dailyCount >= GLOBAL_DAILY_SOFT_LIMIT) {
+      const overSoft = dailyCount - GLOBAL_DAILY_SOFT_LIMIT;
+      const delayMs = Math.min(overSoft * 500, 5000); // 0.5s extra per request over soft limit, max 5s
+      await new Promise((resolve) => setTimeout(resolve, delayMs));
+    }
+
+    // ── Parse & Validate ──
     const body = await req.json();
-    const { propType, purpose, city, area, space, rooms, feature, price, leadId } = body;
+    const { propType, purpose, city, area, space, rooms, feature, price } = body;
 
     if (!propType || !purpose || !city) {
       return NextResponse.json(
@@ -53,7 +135,7 @@ ${extras ? `- تفاصيل إضافية: ${extras}` : ""}
 
 اكتب بلهجة عربية فصيحة مناسبة لمدينة ${city}. لا تستخدم كلمات إنجليزية.`;
 
-    // Use z-ai-web-dev-sdk for secure backend AI call
+    // ── AI Generation ──
     const zai = await ZAI.create();
 
     const completion = await zai.chat.completions.create({
@@ -81,11 +163,14 @@ ${extras ? `- تفاصيل إضافية: ${extras}` : ""}
       );
     }
 
-    // Save generation to database
+    // ── Track usage ──
+    dailyCount++;
+    incrementIpCount(ip);
+
+    // Save to database (non-blocking)
     try {
       await db.titleGeneration.create({
         data: {
-          leadId: leadId || null,
           propType,
           purpose,
           city,
@@ -99,10 +184,15 @@ ${extras ? `- تفاصيل إضافية: ${extras}` : ""}
       });
     } catch (dbError) {
       console.error("DB save error:", dbError);
-      // Don't fail the request if DB save fails
     }
 
-    return NextResponse.json({ titles: parsed.titles });
+    // Include remaining count hint (subtle)
+    const remaining = Math.max(0, PER_IP_DAILY_LIMIT - getIpCount(ip));
+
+    return NextResponse.json({
+      titles: parsed.titles,
+      _meta: { remaining },
+    });
   } catch (error) {
     console.error("Generation error:", error);
     return NextResponse.json(

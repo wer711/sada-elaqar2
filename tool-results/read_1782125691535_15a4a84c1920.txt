@@ -1,0 +1,1212 @@
+     1→"use client";
+     2→
+     3→import { useState, useEffect, useCallback } from "react";
+     4→import { motion, AnimatePresence } from "framer-motion";
+     5→import {
+     6→  Home,
+     7→  Sparkles,
+     8→  Copy,
+     9→  Check,
+    10→  RotateCcw,
+    11→  ChevronDown,
+    12→  Phone,
+    13→  Users,
+    14→  Clock,
+    15→  Globe,
+    16→  Target,
+    17→  Star,
+    18→  ArrowLeft,
+    19→  Zap,
+    20→  Shield,
+    21→  TrendingUp,
+    22→  MessageCircle,
+    23→  X,
+    24→} from "lucide-react";
+    25→
+    26→// ─── Types ─────────────────────────────────────────────────
+    27→interface TitleResult {
+    28→  platform: string;
+    29→  title: string;
+    30→}
+    31→
+    32→interface FormData {
+    33→  propType: string;
+    34→  purpose: string;
+    35→  city: string;
+    36→  area: string;
+    37→  space: string;
+    38→  rooms: string;
+    39→  feature: string;
+    40→  price: string;
+    41→}
+    42→
+    43→interface LeadData {
+    44→  name: string;
+    45→  whatsapp: string;
+    46→  email: string;
+    47→  country: string;
+    48→  role: string;
+    49→}
+    50→
+    51→// ─── Constants ─────────────────────────────────────────────
+    52→const INITIAL_FORM: FormData = {
+    53→  propType: "",
+    54→  purpose: "",
+    55→  city: "",
+    56→  area: "",
+    57→  space: "",
+    58→  rooms: "",
+    59→  feature: "",
+    60→  price: "",
+    61→};
+    62→
+    63→const INITIAL_LEAD: LeadData = {
+    64→  name: "",
+    65→  whatsapp: "",
+    66→  email: "",
+    67→  country: "",
+    68→  role: "",
+    69→};
+    70→
+    71→const PLATFORM_COLORS: Record<string, string> = {
+    72→  واتساب: "#25D366",
+    73→  إنستغرام: "#E1306C",
+    74→  "تويتر / X": "#000000",
+    75→  لينكدإن: "#0A66C2",
+    76→};
+    77→
+    78→const TESTIMONIALS = [
+    79→  {
+    80→    name: "أحمد الرشيدي",
+    81→    role: "وكيل عقاري · الرياض",
+    82→    text: "كنت أقضي ساعة على وصف كل عقار، الآن أنشر لـ٥ عقارات في نفس الوقت بجودة أفضل.",
+    83→    avatar: "👨‍💼",
+    84→  },
+    85→  {
+    86→    name: "نورة الشامسي",
+    87→    role: "مستثمرة عقارية · دبي",
+    88→    text: "المحتوى يطلع بلهجة الإمارات وبأسلوب يستهدف المستثمر تحديداً. الواتساب صار يرنّ أكثر!",
+    89→    avatar: "👩‍💼",
+    90→  },
+    91→  {
+    92→    name: "خالد العتيبي",
+    93→    role: "مسؤول تسويق · الدوحة",
+    94→    text: "جربنا كتابة محتوى لـ٣ منصات بنفس العقار — كل وحدة مظبوطة للمنصة. فرق حقيقي.",
+    95→    avatar: "👨‍💻",
+    96→  },
+    97→];
+    98→
+    99→const CITIES = {
+   100→  السعودية: ["الرياض", "جدة", "مكة المكرمة", "الدمام", "المدينة المنورة", "الخبر"],
+   101→  الإمارات: ["دبي", "أبوظبي", "الشارقة", "عجمان", "رأس الخيمة"],
+   102→  الخليج: ["الدوحة", "الكويت", "مسقط", "المنامة"],
+   103→  أخرى: ["القاهرة", "عمّان", "بيروت", "الدار البيضاء"],
+   104→};
+   105→
+   106→const PROP_TYPES = {
+   107→  سكني: ["شقة", "فيلا", "استوديو", "بنتهاوس", "دوبلكس", "شاليه", "عمارة سكنية"],
+   108→  تجاري: ["محل تجاري", "مكتب تجاري"],
+   109→  أراضي: ["أرض سكنية", "أرض تجارية"],
+   110→};
+   111→
+   112→const FEATURES = [
+   113→  "إطلالة بحرية",
+   114→  "إطلالة على الحديقة",
+   115→  "موقع مميز",
+   116→  "تشطيب فاخر",
+   117→  "قريب من المسجد",
+   118→  "قريب من المدارس",
+   119→  "مسبح خاص",
+   120→  "فرصة استثمارية",
+   121→  "تسليم فوري",
+   122→];
+   123→
+   124→const COUNTRIES = [
+   125→  "السعودية",
+   126→  "الإمارات",
+   127→  "قطر",
+   128→  "الكويت",
+   129→  "البحرين",
+   130→  "عُمان",
+   131→  "مصر",
+   132→  "الأردن",
+   133→  "العراق",
+   134→  "المغرب",
+   135→];
+   136→
+   137→const ROLES = [
+   138→  "وكيل عقاري مستقل",
+   139→  "مكتب وساطة عقاري",
+   140→  "شركة تطوير عقاري",
+   141→  "مستثمر عقاري",
+   142→  "أخرى",
+   143→];
+   144→
+   145→// ─── Simulated user counter ────────────────────────────────
+   146→function useUserCounter() {
+   147→  const [count, setCount] = useState(2847);
+   148→  const [mounted, setMounted] = useState(false);
+   149→  useEffect(() => {
+   150→    setMounted(true);
+   151→    const interval = setInterval(() => {
+   152→      setCount((prev) => prev + Math.floor(Math.random() * 3));
+   153→    }, 8000 + Math.random() * 12000);
+   154→    return () => clearInterval(interval);
+   155→  }, []);
+   156→  return mounted ? count : 2847;
+   157→}
+   158→
+   159→// ─── Countdown Timer ───────────────────────────────────────
+   160→function useCountdown() {
+   161→  const STORAGE_KEY = "sada_countdown_end";
+   162→  const TEN_DAYS_MS = 10 * 24 * 60 * 60 * 1000;
+   163→  // Static initial value for SSR — always 10 days 00:00:00 to avoid hydration mismatch
+   164→  const INITIAL = { days: 10, hours: 0, minutes: 0, seconds: 0 };
+   165→
+   166→  const calcRemaining = (target: number) => {
+   167→    const diff = Math.max(0, target - Date.now());
+   168→    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+   169→    const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+   170→    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+   171→    const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+   172→    return { days, hours, minutes, seconds };
+   173→  };
+   174→
+   175→  const [timeLeft, setTimeLeft] = useState(INITIAL);
+   176→
+   177→  useEffect(() => {
+   178→    // Calculate real target on client only
+   179→    let target: number;
+   180→    const stored = localStorage.getItem(STORAGE_KEY);
+   181→    if (stored) {
+   182→      const end = parseInt(stored, 10);
+   183→      if (end > Date.now()) {
+   184→        target = end;
+   185→      } else {
+   186→        target = Date.now() + TEN_DAYS_MS;
+   187→        localStorage.setItem(STORAGE_KEY, String(target));
+   188→      }
+   189→    } else {
+   190→      target = Date.now() + TEN_DAYS_MS;
+   191→      localStorage.setItem(STORAGE_KEY, String(target));
+   192→    }
+   193→
+   194→    // Set correct value immediately
+   195→    setTimeLeft(calcRemaining(target));
+   196→
+   197→    const timer = setInterval(() => {
+   198→      const remaining = calcRemaining(target);
+   199→      setTimeLeft(remaining);
+   200→      if (remaining.days === 0 && remaining.hours === 0 && remaining.minutes === 0 && remaining.seconds === 0) {
+   201→        clearInterval(timer);
+   202→      }
+   203→    }, 1000);
+   204→    return () => clearInterval(timer);
+   205→    // eslint-disable-next-line react-hooks/exhaustive-deps
+   206→  }, []);
+   207→
+   208→  return timeLeft;
+   209→}
+   210→
+   211→// ─── Main Page ─────────────────────────────────────────────
+   212→export default function SadaLandingPage() {
+   213→  const [formStep, setFormStep] = useState<"form" | "lead_gate" | "loading" | "results">("form");
+   214→  const [formData, setFormData] = useState<FormData>(INITIAL_FORM);
+   215→  const [leadData, setLeadData] = useState<LeadData>(INITIAL_LEAD);
+   216→  const [titles, setTitles] = useState<TitleResult[]>([]);
+   217→  const [error, setError] = useState("");
+   218→  const [copiedIdx, setCopiedIdx] = useState<number | null>(null);
+   219→  const [showLeadForm, setShowLeadForm] = useState(false);
+   220→  const [leadSubmitted, setLeadSubmitted] = useState(false);
+   221→  const [leadId, setLeadId] = useState<string>("");
+   222→  const [showWhatsAppChat, setShowWhatsAppChat] = useState(false);
+   223→  const [generationCount, setGenerationCount] = useState(0);
+   224→
+   225→  const userCount = useUserCounter();
+   226→  const countdown = useCountdown();
+   227→
+   228→  // Track generation count from localStorage
+   229→  useEffect(() => {
+   230→    const stored = localStorage.getItem("sada_gen_count");
+   231→    if (stored) setGenerationCount(parseInt(stored, 10));
+   232→  }, []);
+   233→
+   234→  const handleFormChange = useCallback(
+   235→    (field: keyof FormData, value: string) => {
+   236→      setFormData((prev) => ({ ...prev, [field]: value }));
+   237→      setError("");
+   238→    },
+   239→    []
+   240→  );
+   241→
+   242→  const handleLeadChange = useCallback(
+   243→    (field: keyof LeadData, value: string) => {
+   244→      setLeadData((prev) => ({ ...prev, [field]: value }));
+   245→    },
+   246→    []
+   247→  );
+   248→
+   249→  const validateForm = (): boolean => {
+   250→    if (!formData.propType || !formData.purpose || !formData.city) {
+   251→      setError("يرجى اختيار نوع العقار والغرض والمدينة على الأقل");
+   252→      return false;
+   253→    }
+   254→    return true;
+   255→  };
+   256→
+   257→  const handleGenerate = async () => {
+   258→    if (!validateForm()) return;
+   259→
+   260→    // After 1 free generation, show lead gate
+   261→    if (generationCount >= 1 && !leadSubmitted) {
+   262→      setFormStep("lead_gate");
+   263→      return;
+   264→    }
+   265→
+   266→    await generateTitles();
+   267→  };
+   268→
+   269→  const generateTitles = async () => {
+   270→    setFormStep("loading");
+   271→    setError("");
+   272→
+   273→    try {
+   274→      const res = await fetch("/api/generate-titles", {
+   275→        method: "POST",
+   276→        headers: { "Content-Type": "application/json" },
+   277→        body: JSON.stringify({ ...formData, leadId }),
+   278→      });
+   279→
+   280→      const data = await res.json();
+   281→
+   282→      if (!res.ok) {
+   283→        throw new Error(data.error || "حدث خطأ");
+   284→      }
+   285→
+   286→      setTitles(data.titles);
+   287→      setFormStep("results");
+   288→      const newCount = generationCount + 1;
+   289→      setGenerationCount(newCount);
+   290→      localStorage.setItem("sada_gen_count", String(newCount));
+   291→    } catch (err: unknown) {
+   292→      const message = err instanceof Error ? err.message : "حدث خطأ أثناء التوليد";
+   293→      setError(message);
+   294→      setFormStep("form");
+   295→    }
+   296→  };
+   297→
+   298→  const handleLeadSubmit = async () => {
+   299→    if (!leadData.whatsapp && !leadData.email) {
+   300→      setError("يرجى إدخال رقم الواتساب أو البريد الإلكتروني");
+   301→      return;
+   302→    }
+   303→
+   304→    try {
+   305→      const res = await fetch("/api/capture-lead", {
+   306→        method: "POST",
+   307→        headers: { "Content-Type": "application/json" },
+   308→        body: JSON.stringify({
+   309→          ...leadData,
+   310→          propType: formData.propType,
+   311→          purpose: formData.purpose,
+   312→          city: formData.city,
+   313→        }),
+   314→      });
+   315→
+   316→      const data = await res.json();
+   317→
+   318→      if (!res.ok) {
+   319→        throw new Error(data.error || "حدث خطأ");
+   320→      }
+   321→
+   322→      setLeadId(data.leadId);
+   323→      setLeadSubmitted(true);
+   324→      setShowLeadForm(false);
+   325→      await generateTitles();
+   326→    } catch (err: unknown) {
+   327→      const message = err instanceof Error ? err.message : "حدث خطأ في حفظ البيانات";
+   328→      setError(message);
+   329→    }
+   330→  };
+   331→
+   332→  const handleCopy = (text: string, idx: number) => {
+   333→    navigator.clipboard.writeText(text);
+   334→    setCopiedIdx(idx);
+   335→    setTimeout(() => setCopiedIdx(null), 2200);
+   336→  };
+   337→
+   338→  const handleReset = () => {
+   339→    setFormData(INITIAL_FORM);
+   340→    setTitles([]);
+   341→    setFormStep("form");
+   342→    setError("");
+   343→  };
+   344→
+   345→  const whatsappShareText = titles.length
+   346→    ? `🏠 جرّبت أداة مجانية تكتب عناوين تسويقية لأي عقار في 7 ثوانٍ!\n\nمثال لـ${formData.propType} ${formData.purpose} في ${formData.city}:\n\n"${titles[0]?.title}"\n\nجرّبها مجاناً بدون تسجيل 👇`
+   347→    : "";
+   348→
+   349→  return (
+   350→    <div className="min-h-screen flex flex-col">
+   351→      {/* ── HEADER ── */}
+   352→      <header className="bg-[#0f1117] px-4 sm:px-6 py-4 flex items-center justify-between sticky top-0 z-50">
+   353→        <a
+   354→          href="https://sada-elaqar.vercel.app"
+   355→          target="_blank"
+   356→          rel="noopener noreferrer"
+   357→          className="flex items-center gap-3 no-underline"
+   358→        >
+   359→          <div className="w-9 h-9 bg-[#c9a84c] rounded-full flex items-center justify-center flex-shrink-0">
+   360→            <Home className="w-4 h-4 text-[#0f1117]" />
+   361→          </div>
+   362→          <div>
+   363→            <div className="text-white font-bold text-base leading-tight">صدى العقار</div>
+   364→            <div className="text-white/40 text-xs font-light">مساعد التسويق العقاري</div>
+   365→          </div>
+   366→        </a>
+   367→        <div className="flex items-center gap-3">
+   368→          <div className="hidden sm:flex items-center gap-1.5 text-white/50 text-xs">
+   369→            <Users className="w-3.5 h-3.5" />
+   370→            <span>{userCount.toLocaleString("ar-SA")} مستخدم</span>
+   371→          </div>
+   372→          <a
+   373→            href="https://sada-elaqar.vercel.app"
+   374→            target="_blank"
+   375→            rel="noopener noreferrer"
+   376→            className="bg-[#c9a84c] text-[#0f1117] font-bold text-sm px-4 py-2 rounded-lg no-underline hover:opacity-90 transition-opacity whitespace-nowrap"
+   377→          >
+   378→            جرّب النسخة الكاملة ←
+   379→          </a>
+   380→        </div>
+   381→      </header>
+   382→
+   383→      {/* ── HERO ── */}
+   384→      <section className="bg-[#0f1117] pt-12 pb-20 px-5 text-center relative overflow-hidden">
+   385→        <div className="absolute top-[-80px] left-1/2 -translate-x-1/2 w-[500px] h-[500px] bg-[rgba(201,168,76,0.15)] rounded-full pointer-events-none" />
+   386→
+   387→        <motion.div
+   388→          initial={{ opacity: 0, y: 20 }}
+   389→          animate={{ opacity: 1, y: 0 }}
+   390→          transition={{ duration: 0.6 }}
+   391→        >
+   392→          {/* Urgency Badge */}
+   393→          <div className="inline-flex items-center gap-2 bg-[#c9a84c]/10 border border-[#c9a84c]/30 text-[#c9a84c] rounded-full px-4 py-1.5 text-xs font-bold mb-5">
+   394→            <Zap className="w-3.5 h-3.5" />
+   395→            <span>عرض لفترة محدودة — مجاناً بالكامل</span>
+   396→            <div className="flex gap-1 mr-1 items-center">
+   397→              <span className="bg-[#c9a84c] text-[#0f1117] px-2 py-0.5 rounded text-[10px] font-black">
+   398→                {countdown.days}
+   399→              </span>
+   400→              <span className="text-[#c9a84c] text-[9px]">يوم</span>
+   401→              <span className="text-[#c9a84c]">:</span>
+   402→              <span className="bg-[#c9a84c] text-[#0f1117] px-1.5 py-0.5 rounded text-[10px] font-black">
+   403→                {String(countdown.hours).padStart(2, "0")}
+   404→              </span>
+   405→              <span className="text-[#c9a84c]">:</span>
+   406→              <span className="bg-[#c9a84c] text-[#0f1117] px-1.5 py-0.5 rounded text-[10px] font-black">
+   407→                {String(countdown.minutes).padStart(2, "0")}
+   408→              </span>
+   409→              <span className="text-[#c9a84c]">:</span>
+   410→              <span className="bg-[#c9a84c] text-[#0f1117] px-1.5 py-0.5 rounded text-[10px] font-black">
+   411→                {String(countdown.seconds).padStart(2, "0")}
+   412→              </span>
+   413→            </div>
+   414→          </div>
+   415→
+   416→          <h1 className="text-white text-3xl sm:text-4xl lg:text-5xl font-black leading-snug max-w-2xl mx-auto mb-4">
+   417→            أنشئ <span className="text-[#c9a84c]">عنواناً تسويقياً</span>
+   418→            <br />
+   419→            لعقارك في 7 ثوانٍ
+   420→          </h1>
+   421→
+   422→          <p className="text-white/50 text-base sm:text-lg max-w-lg mx-auto leading-relaxed">
+   423→            أدخل نوع العقار والمدينة — وسيكتب الذكاء الاصطناعي لك عناوين جاهزة للنشر على كل
+   424→            المنصات
+   425→          </p>
+   426→
+   427→          {/* Trust badges */}
+   428→          <div className="flex flex-wrap items-center justify-center gap-4 mt-6 text-white/40 text-xs">
+   429→            <span className="flex items-center gap-1.5">
+   430→              <Shield className="w-3.5 h-3.5 text-[#c9a84c]" /> بدون تسجيل
+   431→            </span>
+   432→            <span className="flex items-center gap-1.5">
+   433→              <Clock className="w-3.5 h-3.5 text-[#c9a84c]" /> نتيجة فورية
+   434→            </span>
+   435→            <span className="flex items-center gap-1.5">
+   436→              <Globe className="w-3.5 h-3.5 text-[#c9a84c]" /> بلهجة بلدك
+   437→            </span>
+   438→          </div>
+   439→        </motion.div>
+   440→      </section>
+   441→
+   442→      {/* ── MAIN CARD ── */}
+   443→      <div className="max-w-[680px] w-full mx-auto -mt-10 px-4 pb-12 relative z-10">
+   444→        <motion.div
+   445→          className="bg-white rounded-[20px] shadow-[0_12px_48px_rgba(15,17,23,0.14)] overflow-hidden"
+   446→          initial={{ opacity: 0, y: 30 }}
+   447→          animate={{ opacity: 1, y: 0 }}
+   448→          transition={{ duration: 0.5, delay: 0.2 }}
+   449→        >
+   450→          {/* Card Header */}
+   451→          <div className="bg-gradient-to-bl from-[#f5edda] to-[#fff8e8] border-b border-[#edddb0] px-6 py-5 flex items-center gap-3">
+   452→            <div className="w-10 h-10 bg-[#c9a84c] rounded-[10px] flex items-center justify-center flex-shrink-0">
+   453→              <Sparkles className="w-5 h-5 text-white" />
+   454→            </div>
+   455→            <div>
+   456→              <h2 className="text-base font-bold text-[#0f1117]">بيانات العقار</h2>
+   457→              <p className="text-xs text-[#3a3d4a] mt-0.5">خطوتان فقط — والعنوان جاهز</p>
+   458→            </div>
+   459→          </div>
+   460→
+   461→          <AnimatePresence mode="wait">
+   462→            {/* ── FORM ── */}
+   463→            {formStep === "form" && (
+   464→              <motion.div
+   465→                key="form"
+   466→                initial={{ opacity: 0 }}
+   467→                animate={{ opacity: 1 }}
+   468→                exit={{ opacity: 0 }}
+   469→                className="p-6"
+   470→              >
+   471→                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+   472→                  {/* Property Type */}
+   473→                  <div className="flex flex-col gap-1.5">
+   474→                    <label className="text-sm font-bold text-[#3a3d4a] flex items-center gap-1.5">
+   475→                      نوع العقار <span className="text-[#c9a84c]">*</span>
+   476→                    </label>
+   477→                    <div className="relative">
+   478→                      <select
+   479→                        value={formData.propType}
+   480→                        onChange={(e) => handleFormChange("propType", e.target.value)}
+   481→                        className="w-full text-sm bg-[#f5f6fa] border-[1.5px] border-[#e2e4ed] rounded-[14px] py-3 px-3.5 appearance-none cursor-pointer focus:border-[#c9a84c] focus:shadow-[0_0_0_3px_rgba(201,168,76,0.18)] focus:bg-white transition-all font-[Cairo]"
+   482→                      >
+   483→                        <option value="">— اختر —</option>
+   484→                        {Object.entries(PROP_TYPES).map(([group, types]) => (
+   485→                          <optgroup key={group} label={group}>
+   486→                            {types.map((t) => (
+   487→                              <option key={t} value={t}>
+   488→                                {t}
+   489→                              </option>
+   490→                            ))}
+   491→                          </optgroup>
+   492→                        ))}
+   493→                      </select>
+   494→                      <ChevronDown className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#3a3d4a] pointer-events-none" />
+   495→                    </div>
+   496→                  </div>
+   497→
+   498→                  {/* Purpose */}
+   499→                  <div className="flex flex-col gap-1.5">
+   500→                    <label className="text-sm font-bold text-[#3a3d4a] flex items-center gap-1.5">
+   501→                      الغرض <span className="text-[#c9a84c]">*</span>
+   502→                    </label>
+   503→                    <div className="relative">
+   504→                      <select
+   505→                        value={formData.purpose}
+   506→                        onChange={(e) => handleFormChange("purpose", e.target.value)}
+   507→                        className="w-full text-sm bg-[#f5f6fa] border-[1.5px] border-[#e2e4ed] rounded-[14px] py-3 px-3.5 appearance-none cursor-pointer focus:border-[#c9a84c] focus:shadow-[0_0_0_3px_rgba(201,168,76,0.18)] focus:bg-white transition-all font-[Cairo]"
+   508→                      >
+   509→                        <option value="">— اختر —</option>
+   510→                        <option value="للبيع">للبيع</option>
+   511→                        <option value="للإيجار">للإيجار</option>
+   512→                        <option value="للاستثمار">للاستثمار</option>
+   513→                      </select>
+   514→                      <ChevronDown className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#3a3d4a] pointer-events-none" />
+   515→                    </div>
+   516→                  </div>
+   517→
+   518→                  {/* City */}
+   519→                  <div className="flex flex-col gap-1.5">
+   520→                    <label className="text-sm font-bold text-[#3a3d4a] flex items-center gap-1.5">
+   521→                      المدينة <span className="text-[#c9a84c]">*</span>
+   522→                    </label>
+   523→                    <div className="relative">
+   524→                      <select
+   525→                        value={formData.city}
+   526→                        onChange={(e) => handleFormChange("city", e.target.value)}
+   527→                        className="w-full text-sm bg-[#f5f6fa] border-[1.5px] border-[#e2e4ed] rounded-[14px] py-3 px-3.5 appearance-none cursor-pointer focus:border-[#c9a84c] focus:shadow-[0_0_0_3px_rgba(201,168,76,0.18)] focus:bg-white transition-all font-[Cairo]"
+   528→                      >
+   529→                        <option value="">— اختر —</option>
+   530→                        {Object.entries(CITIES).map(([group, cities]) => (
+   531→                          <optgroup key={group} label={group}>
+   532→                            {cities.map((c) => (
+   533→                              <option key={c} value={c}>
+   534→                                {c}
+   535→                              </option>
+   536→                            ))}
+   537→                          </optgroup>
+   538→                        ))}
+   539→                      </select>
+   540→                      <ChevronDown className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#3a3d4a] pointer-events-none" />
+   541→                    </div>
+   542→                  </div>
+   543→
+   544→                  {/* Area */}
+   545→                  <div className="flex flex-col gap-1.5">
+   546→                    <label className="text-sm font-bold text-[#3a3d4a]">الحي / المنطقة</label>
+   547→                    <input
+   548→                      type="text"
+   549→                      value={formData.area}
+   550→                      onChange={(e) => handleFormChange("area", e.target.value)}
+   551→                      placeholder="مثال: حي النرجس، وسط المدينة"
+   552→                      className="w-full text-sm bg-[#f5f6fa] border-[1.5px] border-[#e2e4ed] rounded-[14px] py-3 px-3.5 focus:border-[#c9a84c] focus:shadow-[0_0_0_3px_rgba(201,168,76,0.18)] focus:bg-white transition-all font-[Cairo] outline-none"
+   553→                    />
+   554→                  </div>
+   555→                </div>
+   556→
+   557→                {/* Step Divider */}
+   558→                <div className="flex items-center gap-3 my-5 text-[#3a3d4a] text-xs font-semibold">
+   559→                  <span className="flex-1 h-px bg-[#e2e4ed]" />
+   560→                  تفاصيل إضافية (اختياري — تحسّن النتيجة)
+   561→                  <span className="flex-1 h-px bg-[#e2e4ed]" />
+   562→                </div>
+   563→
+   564→                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+   565→                  {/* Space */}
+   566→                  <div className="flex flex-col gap-1.5">
+   567→                    <label className="text-sm font-bold text-[#3a3d4a]">المساحة (م²)</label>
+   568→                    <input
+   569→                      type="text"
+   570→                      value={formData.space}
+   571→                      onChange={(e) => handleFormChange("space", e.target.value)}
+   572→                      placeholder="مثال: 150"
+   573→                      className="w-full text-sm bg-[#f5f6fa] border-[1.5px] border-[#e2e4ed] rounded-[14px] py-3 px-3.5 focus:border-[#c9a84c] focus:shadow-[0_0_0_3px_rgba(201,168,76,0.18)] focus:bg-white transition-all font-[Cairo] outline-none"
+   574→                    />
+   575→                  </div>
+   576→
+   577→                  {/* Rooms */}
+   578→                  <div className="flex flex-col gap-1.5">
+   579→                    <label className="text-sm font-bold text-[#3a3d4a]">عدد الغرف</label>
+   580→                    <div className="relative">
+   581→                      <select
+   582→                        value={formData.rooms}
+   583→                        onChange={(e) => handleFormChange("rooms", e.target.value)}
+   584→                        className="w-full text-sm bg-[#f5f6fa] border-[1.5px] border-[#e2e4ed] rounded-[14px] py-3 px-3.5 appearance-none cursor-pointer focus:border-[#c9a84c] focus:shadow-[0_0_0_3px_rgba(201,168,76,0.18)] focus:bg-white transition-all font-[Cairo]"
+   585→                      >
+   586→                        <option value="">—</option>
+   587→                        <option>استوديو</option>
+   588→                        <option>غرفة واحدة</option>
+   589→                        <option>غرفتان</option>
+   590→                        <option>3 غرف</option>
+   591→                        <option>4 غرف</option>
+   592→                        <option>5 غرف وأكثر</option>
+   593→                      </select>
+   594→                      <ChevronDown className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#3a3d4a] pointer-events-none" />
+   595→                    </div>
+   596→                  </div>
+   597→
+   598→                  {/* Feature */}
+   599→                  <div className="flex flex-col gap-1.5">
+   600→                    <label className="text-sm font-bold text-[#3a3d4a]">ميزة بارزة</label>
+   601→                    <div className="relative">
+   602→                      <select
+   603→                        value={formData.feature}
+   604→                        onChange={(e) => handleFormChange("feature", e.target.value)}
+   605→                        className="w-full text-sm bg-[#f5f6fa] border-[1.5px] border-[#e2e4ed] rounded-[14px] py-3 px-3.5 appearance-none cursor-pointer focus:border-[#c9a84c] focus:shadow-[0_0_0_3px_rgba(201,168,76,0.18)] focus:bg-white transition-all font-[Cairo]"
+   606→                      >
+   607→                        <option value="">— اختر إن وجد —</option>
+   608→                        {FEATURES.map((f) => (
+   609→                          <option key={f} value={f}>
+   610→                            {f}
+   611→                          </option>
+   612→                        ))}
+   613→                      </select>
+   614→                      <ChevronDown className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#3a3d4a] pointer-events-none" />
+   615→                    </div>
+   616→                  </div>
+   617→
+   618→                  {/* Price */}
+   619→                  <div className="flex flex-col gap-1.5">
+   620→                    <label className="text-sm font-bold text-[#3a3d4a]">السعر</label>
+   621→                    <input
+   622→                      type="text"
+   623→                      value={formData.price}
+   624→                      onChange={(e) => handleFormChange("price", e.target.value)}
+   625→                      placeholder="مثال: 850,000 ريال"
+   626→                      className="w-full text-sm bg-[#f5f6fa] border-[1.5px] border-[#e2e4ed] rounded-[14px] py-3 px-3.5 focus:border-[#c9a84c] focus:shadow-[0_0_0_3px_rgba(201,168,76,0.18)] focus:bg-white transition-all font-[Cairo] outline-none"
+   627→                    />
+   628→                  </div>
+   629→                </div>
+   630→
+   631→                {/* Error */}
+   632→                {error && (
+   633→                  <motion.div
+   634→                    initial={{ opacity: 0, y: -5 }}
+   635→                    animate={{ opacity: 1, y: 0 }}
+   636→                    className="mt-4 bg-red-50 border border-red-200 text-red-700 rounded-xl px-4 py-3 text-sm text-center"
+   637→                  >
+   638→                    ⚠️ {error}
+   639→                  </motion.div>
+   640→                )}
+   641→
+   642→                {/* Generate Button */}
+   643→                <button
+   644→                  onClick={handleGenerate}
+   645→                  className="w-full mt-6 bg-[#c9a84c] text-[#0f1117] font-black text-base py-4 rounded-[14px] cursor-pointer flex items-center justify-center gap-2.5 transition-all hover:-translate-y-0.5 hover:shadow-[0_8px_28px_rgba(201,168,76,0.45)] active:translate-y-0 shadow-[0_4px_20px_rgba(201,168,76,0.35)]"
+   646→                >
+   647→                  <Zap className="w-5 h-5" />
+   648→                  أنشئ العناوين التسويقية الآن
+   649→                </button>
+   650→              </motion.div>
+   651→            )}
+   652→
+   653→            {/* ── LEAD GATE ── */}
+   654→            {formStep === "lead_gate" && (
+   655→              <motion.div
+   656→                key="lead_gate"
+   657→                initial={{ opacity: 0 }}
+   658→                animate={{ opacity: 1 }}
+   659→                exit={{ opacity: 0 }}
+   660→                className="p-6"
+   661→              >
+   662→                <div className="text-center mb-6">
+   663→                  <div className="w-14 h-14 bg-[#c9a84c]/10 rounded-full flex items-center justify-center mx-auto mb-3">
+   664→                    <Star className="w-7 h-7 text-[#c9a84c]" />
+   665→                  </div>
+   666→                  <h3 className="text-lg font-bold text-[#0f1117] mb-2">
+   667→                    استمتع بتجربة بدون حدود!
+   668→                  </h3>
+   669→                  <p className="text-sm text-[#3a3d4a] leading-relaxed">
+   670→                    أدخل بياناتك لمتابعة استخدام الأداة مجاناً — وسنرسل لك ميزات حصرية عند إطلاق
+   671→                    النسخة الكاملة
+   672→                  </p>
+   673→                </div>
+   674→
+   675→                <div className="space-y-4">
+   676→                  <div className="flex flex-col gap-1.5">
+   677→                    <label className="text-sm font-bold text-[#3a3d4a]">الاسم</label>
+   678→                    <input
+   679→                      type="text"
+   680→                      value={leadData.name}
+   681→                      onChange={(e) => handleLeadChange("name", e.target.value)}
+   682→                      placeholder="اسمك الكامل"
+   683→                      className="w-full text-sm bg-[#f5f6fa] border-[1.5px] border-[#e2e4ed] rounded-[14px] py-3 px-3.5 focus:border-[#c9a84c] focus:shadow-[0_0_0_3px_rgba(201,168,76,0.18)] focus:bg-white transition-all font-[Cairo] outline-none"
+   684→                    />
+   685→                  </div>
+   686→
+   687→                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+   688→                    <div className="flex flex-col gap-1.5">
+   689→                      <label className="text-sm font-bold text-[#3a3d4a] flex items-center gap-1.5">
+   690→                        رقم الواتساب <span className="text-[#c9a84c]">*</span>
+   691→                      </label>
+   692→                      <input
+   693→                        type="tel"
+   694→                        value={leadData.whatsapp}
+   695→                        onChange={(e) => handleLeadChange("whatsapp", e.target.value)}
+   696→                        placeholder="+966 5XX XXX XXXX"
+   697→                        className="w-full text-sm bg-[#f5f6fa] border-[1.5px] border-[#e2e4ed] rounded-[14px] py-3 px-3.5 focus:border-[#c9a84c] focus:shadow-[0_0_0_3px_rgba(201,168,76,0.18)] focus:bg-white transition-all font-[Cairo] outline-none"
+   698→                        dir="ltr"
+   699→                      />
+   700→                    </div>
+   701→
+   702→                    <div className="flex flex-col gap-1.5">
+   703→                      <label className="text-sm font-bold text-[#3a3d4a]">
+   704→                        البريد الإلكتروني
+   705→                      </label>
+   706→                      <input
+   707→                        type="email"
+   708→                        value={leadData.email}
+   709→                        onChange={(e) => handleLeadChange("email", e.target.value)}
+   710→                        placeholder="email@example.com"
+   711→                        className="w-full text-sm bg-[#f5f6fa] border-[1.5px] border-[#e2e4ed] rounded-[14px] py-3 px-3.5 focus:border-[#c9a84c] focus:shadow-[0_0_0_3px_rgba(201,168,76,0.18)] focus:bg-white transition-all font-[Cairo] outline-none"
+   712→                        dir="ltr"
+   713→                      />
+   714→                    </div>
+   715→                  </div>
+   716→
+   717→                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+   718→                    <div className="flex flex-col gap-1.5">
+   719→                      <label className="text-sm font-bold text-[#3a3d4a]">الدولة</label>
+   720→                      <div className="relative">
+   721→                        <select
+   722→                          value={leadData.country}
+   723→                          onChange={(e) => handleLeadChange("country", e.target.value)}
+   724→                          className="w-full text-sm bg-[#f5f6fa] border-[1.5px] border-[#e2e4ed] rounded-[14px] py-3 px-3.5 appearance-none cursor-pointer focus:border-[#c9a84c] focus:shadow-[0_0_0_3px_rgba(201,168,76,0.18)] focus:bg-white transition-all font-[Cairo]"
+   725→                        >
+   726→                          <option value="">— اختر —</option>
+   727→                          {COUNTRIES.map((c) => (
+   728→                            <option key={c} value={c}>
+   729→                              {c}
+   730→                            </option>
+   731→                          ))}
+   732→                        </select>
+   733→                        <ChevronDown className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#3a3d4a] pointer-events-none" />
+   734→                      </div>
+   735→                    </div>
+   736→
+   737→                    <div className="flex flex-col gap-1.5">
+   738→                      <label className="text-sm font-bold text-[#3a3d4a]">صفتك</label>
+   739→                      <div className="relative">
+   740→                        <select
+   741→                          value={leadData.role}
+   742→                          onChange={(e) => handleLeadChange("role", e.target.value)}
+   743→                          className="w-full text-sm bg-[#f5f6fa] border-[1.5px] border-[#e2e4ed] rounded-[14px] py-3 px-3.5 appearance-none cursor-pointer focus:border-[#c9a84c] focus:shadow-[0_0_0_3px_rgba(201,168,76,0.18)] focus:bg-white transition-all font-[Cairo]"
+   744→                        >
+   745→                          <option value="">— اختر —</option>
+   746→                          {ROLES.map((r) => (
+   747→                            <option key={r} value={r}>
+   748→                              {r}
+   749→                            </option>
+   750→                          ))}
+   751→                        </select>
+   752→                        <ChevronDown className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#3a3d4a] pointer-events-none" />
+   753→                      </div>
+   754→                    </div>
+   755→                  </div>
+   756→                </div>
+   757→
+   758→                {error && (
+   759→                  <motion.div
+   760→                    initial={{ opacity: 0, y: -5 }}
+   761→                    animate={{ opacity: 1, y: 0 }}
+   762→                    className="mt-4 bg-red-50 border border-red-200 text-red-700 rounded-xl px-4 py-3 text-sm text-center"
+   763→                  >
+   764→                    ⚠️ {error}
+   765→                  </motion.div>
+   766→                )}
+   767→
+   768→                <div className="flex gap-3 mt-6">
+   769→                  <button
+   770→                    onClick={() => setFormStep("form")}
+   771→                    className="flex-1 border-[1.5px] border-[#e2e4ed] text-[#3a3d4a] font-bold text-sm py-3 rounded-[14px] cursor-pointer hover:border-[#c9a84c] hover:text-[#c9a84c] transition-colors"
+   772→                  >
+   773→                    رجوع
+   774→                  </button>
+   775→                  <button
+   776→                    onClick={handleLeadSubmit}
+   777→                    className="flex-[2] bg-[#c9a84c] text-[#0f1117] font-black text-sm py-3 rounded-[14px] cursor-pointer flex items-center justify-center gap-2 transition-all hover:-translate-y-0.5 hover:shadow-[0_8px_28px_rgba(201,168,76,0.45)] shadow-[0_4px_20px_rgba(201,168,76,0.35)]"
+   778→                  >
+   779→                    <Sparkles className="w-4 h-4" />
+   780→                    احصل على العناوين الآن
+   781→                  </button>
+   782→                </div>
+   783→
+   784→                <p className="text-center text-[10px] text-[#aaa] mt-3">
+   785→                  🔒 بياناتك محفوظة بأمان ولن نشاركها مع أي طرف ثالث
+   786→                </p>
+   787→              </motion.div>
+   788→            )}
+   789→
+   790→            {/* ── LOADING ── */}
+   791→            {formStep === "loading" && (
+   792→              <motion.div
+   793→                key="loading"
+   794→                initial={{ opacity: 0 }}
+   795→                animate={{ opacity: 1 }}
+   796→                exit={{ opacity: 0 }}
+   797→                className="flex flex-col items-center py-12 px-5 gap-4"
+   798→              >
+   799→                <div className="w-11 h-11 border-[3px] border-[#e2e4ed] border-t-[#c9a84c] rounded-full animate-spin" />
+   800→                <div className="text-[#3a3d4a] font-semibold text-sm">صدى العقار يكتب لك...</div>
+   801→                <div className="text-[#aaa] text-xs">يحلّل البيانات ويصيغ أفضل العناوين</div>
+   802→              </motion.div>
+   803→            )}
+   804→
+   805→            {/* ── RESULTS ── */}
+   806→            {formStep === "results" && (
+   807→              <motion.div
+   808→                key="results"
+   809→                initial={{ opacity: 0 }}
+   810→                animate={{ opacity: 1 }}
+   811→                exit={{ opacity: 0 }}
+   812→                className="p-6"
+   813→              >
+   814→                {/* Result Label */}
+   815→                <div className="flex items-center gap-2 mb-4">
+   816→                  <span className="text-xs font-bold text-[#c9a84c] tracking-wider uppercase">
+   817→                    العناوين التسويقية الجاهزة
+   818→                  </span>
+   819→                  <span className="flex-1 h-px bg-[#edddb0]" />
+   820→                </div>
+   821→
+   822→                {/* Title Cards */}
+   823→                <div className="flex flex-col gap-3">
+   824→                  {titles.map((item, idx) => (
+   825→                    <motion.div
+   826→                      key={idx}
+   827→                      initial={{ opacity: 0, x: 20 }}
+   828→                      animate={{ opacity: 1, x: 0 }}
+   829→                      transition={{ delay: idx * 0.1 }}
+   830→                      onClick={() => handleCopy(item.title, idx)}
+   831→                      className={`relative bg-[#f5f6fa] border-[1.5px] rounded-[14px] p-4 cursor-pointer transition-all hover:border-[#c9a84c] hover:shadow-[0_0_0_3px_rgba(201,168,76,0.18)] ${
+   832→                        copiedIdx === idx
+   833→                          ? "border-green-400 shadow-[0_0_0_3px_rgba(34,197,94,0.15)]"
+   834→                          : "border-[#e2e4ed]"
+   835→                      }`}
+   836→                    >
+   837→                      <span
+   838→                        className="inline-block text-[10px] font-bold text-white rounded-md px-2.5 py-1 mb-2.5"
+   839→                        style={{
+   840→                          background: PLATFORM_COLORS[item.platform] || "#333",
+   841→                        }}
+   842→                      >
+   843→                        {item.platform}
+   844→                      </span>
+   845→                      <div className="text-sm font-bold text-[#0f1117] leading-relaxed">
+   846→                        {item.title}
+   847→                      </div>
+   848→                      <div className="absolute left-3.5 top-3.5 flex items-center gap-1 text-[#aaa] text-[10px]">
+   849→                        {copiedIdx === idx ? (
+   850→                          <span className="text-green-500 font-bold flex items-center gap-1">
+   851→                            <Check className="w-3.5 h-3.5" /> تم النسخ
+   852→                          </span>
+   853→                        ) : (
+   854→                          <span className="flex items-center gap-1">
+   855→                            <Copy className="w-3.5 h-3.5" /> انقر للنسخ
+   856→                          </span>
+   857→                        )}
+   858→                      </div>
+   859→                    </motion.div>
+   860→                  ))}
+   861→                </div>
+   862→
+   863→                {/* Upgrade Banner */}
+   864→                <motion.div
+   865→                  initial={{ opacity: 0, y: 10 }}
+   866→                  animate={{ opacity: 1, y: 0 }}
+   867→                  transition={{ delay: 0.5 }}
+   868→                  className="mt-6 bg-gradient-to-bl from-[#0f1117] to-[#1e2235] rounded-2xl p-6 text-center relative overflow-hidden"
+   869→                >
+   870→                  <div className="absolute top-[-30px] right-[-30px] w-[120px] h-[120px] bg-[rgba(201,168,76,0.15)] rounded-full pointer-events-none" />
+   871→                  <h3 className="text-white text-base font-extrabold mb-2">
+   872→                    🚀 هذا مجرد البداية — النسخة الكاملة تفعل أكثر
+   873→                  </h3>
+   874→                  <p className="text-white/50 text-sm leading-relaxed mb-4 max-w-sm mx-auto">
+   875→                    وصف عقاري كامل · هاشتاجات احترافية · محتوى لكل منصة · منشور واتساب جاهز
+   876→                  </p>
+   877→                  <div className="flex flex-wrap justify-center gap-2 mb-5">
+   878→                    {[
+   879→                      "📝 وصف تسويقي كامل",
+   880→                      "# هاشتاجات ذكية",
+   881→                      "📱 منشور إنستغرام",
+   882→                      "💬 رسالة واتساب",
+   883→                      "💼 منشور لينكدإن",
+   884→                    ].map((feat) => (
+   885→                      <span
+   886→                        key={feat}
+   887→                        className="bg-[rgba(201,168,76,0.12)] border border-[rgba(201,168,76,0.3)] text-[#c9a84c] text-xs font-semibold px-3 py-1.5 rounded-full"
+   888→                      >
+   889→                        {feat}
+   890→                      </span>
+   891→                    ))}
+   892→                  </div>
+   893→                  <a
+   894→                    href="https://sada-elaqar.vercel.app#demo"
+   895→                    target="_blank"
+   896→                    rel="noopener noreferrer"
+   897→                    className="inline-flex items-center gap-2 bg-[#c9a84c] text-[#0f1117] font-black text-sm px-7 py-3 rounded-[14px] no-underline transition-all hover:-translate-y-0.5 hover:shadow-[0_8px_28px_rgba(201,168,76,0.45)] shadow-[0_4px_20px_rgba(201,168,76,0.35)]"
+   898→                  >
+   899→                    جرّب النسخة الكاملة مجاناً
+   900→                    <ArrowLeft className="w-4 h-4" />
+   901→                  </a>
+   902→                </motion.div>
+   903→
+   904→                {/* Share Strip */}
+   905→                <div className="flex items-center justify-center gap-3 mt-5 pt-5 border-t border-[#e2e4ed]">
+   906→                  <span className="text-xs text-[#3a3d4a] font-semibold">أعجبتك الأداة؟ شارك زملاءك:</span>
+   907→                  <a
+   908→                    href={`https://wa.me/?text=${encodeURIComponent(whatsappShareText + "\n\n" + (typeof window !== "undefined" ? window.location.href : ""))}`}
+   909→                    target="_blank"
+   910→                    rel="noopener noreferrer"
+   911→                    className="inline-flex items-center gap-1.5 bg-[#25D366] text-white text-xs font-bold px-4 py-2.5 rounded-xl no-underline hover:opacity-90 transition-opacity"
+   912→                  >
+   913→                    <MessageCircle className="w-4 h-4" />
+   914→                    شارك عبر واتساب
+   915→                  </a>
+   916→                </div>
+   917→
+   918→                {/* Try Again */}
+   919→                <button
+   920→                  onClick={handleReset}
+   921→                  className="w-full mt-4 border-[1.5px] border-[#e2e4ed] text-[#3a3d4a] font-bold text-sm py-3 rounded-[14px] cursor-pointer hover:border-[#c9a84c] hover:text-[#c9a84c] transition-colors flex items-center justify-center gap-2"
+   922→                >
+   923→                  <RotateCcw className="w-4 h-4" />
+   924→                  أنشئ عناوين لعقار آخر
+   925→                </button>
+   926→              </motion.div>
+   927→            )}
+   928→          </AnimatePresence>
+   929→        </motion.div>
+   930→
+   931→        {/* ── SOCIAL PROOF CARDS ── */}
+   932→        <div className="flex flex-wrap gap-3 mt-6 justify-center">
+   933→          {[
+   934→            {
+   935→              icon: <Clock className="w-5 h-5 text-[#c9a84c]" />,
+   936→              title: "7 ثوانٍ بدلاً من ساعة",
+   937→              desc: "وكلاء عقاريون يوفّرون ساعات يومياً باستخدام صدى العقار",
+   938→            },
+   939→            {
+   940→              icon: <Globe className="w-5 h-5 text-[#c9a84c]" />,
+   941→              title: "بلهجة بلدك تماماً",
+   942→              desc: "محتوى مخصّص للسعودية والإمارات وقطر والكويت وكل دول الخليج",
+   943→            },
+   944→            {
+   945→              icon: <Target className="w-5 h-5 text-[#c9a84c]" />,
+   946→              title: "لكل منصة أسلوبها",
+   947→              desc: "واتساب، إنستغرام، تويتر، لينكدإن — كل محتوى مضبوط لجمهوره",
+   948→            },
+   949→          ].map((item, idx) => (
+   950→            <motion.div
+   951→              key={idx}
+   952→              initial={{ opacity: 0, y: 20 }}
+   953→              animate={{ opacity: 1, y: 0 }}
+   954→              transition={{ delay: 0.4 + idx * 0.1 }}
+   955→              className="bg-white border border-[#e2e4ed] rounded-xl p-4 flex-1 min-w-[200px] max-w-[300px] flex items-start gap-3"
+   956→            >
+   957→              <div className="flex-shrink-0 mt-0.5">{item.icon}</div>
+   958→              <div>
+   959→                <div className="text-sm font-bold text-[#0f1117] mb-1">{item.title}</div>
+   960→                <div className="text-xs text-[#3a3d4a] leading-relaxed">{item.desc}</div>
+   961→              </div>
+   962→            </motion.div>
+   963→          ))}
+   964→        </div>
+   965→      </div>
+   966→
+   967→      {/* ── TESTIMONIALS SECTION ── */}
+   968→      <section className="bg-white py-16 px-5">
+   969→        <div className="max-w-4xl mx-auto">
+   970→          <motion.div
+   971→            initial={{ opacity: 0 }}
+   972→            whileInView={{ opacity: 1 }}
+   973→            viewport={{ once: true }}
+   974→            className="text-center mb-10"
+   975→          >
+   976→            <h2 className="text-2xl sm:text-3xl font-black text-[#0f1117] mb-3">
+   977→              كيف يُستخدم <span className="text-[#c9a84c]">صدى العقار</span>؟
+   978→            </h2>
+   979→            <p className="text-sm text-[#3a3d4a]">تجارب واقعية لأنماط تسويقية مختلفة</p>
+   980→          </motion.div>
+   981→
+   982→          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+   983→            {TESTIMONIALS.map((t, idx) => (
+   984→              <motion.div
+   985→                key={idx}
+   986→                initial={{ opacity: 0, y: 20 }}
+   987→                whileInView={{ opacity: 1, y: 0 }}
+   988→                viewport={{ once: true }}
+   989→                transition={{ delay: idx * 0.15 }}
+   990→                className="bg-[#f5f6fa] rounded-2xl p-5 border border-[#e2e4ed]"
+   991→              >
+   992→                <div className="flex items-center gap-3 mb-3">
+   993→                  <div className="w-10 h-10 bg-[#c9a84c]/10 rounded-full flex items-center justify-center text-lg">
+   994→                    {t.avatar}
+   995→                  </div>
+   996→                  <div>
+   997→                    <div className="text-sm font-bold text-[#0f1117]">{t.name}</div>
+   998→                    <div className="text-xs text-[#3a3d4a]">{t.role}</div>
+   999→                  </div>
+  1000→                </div>
+  1001→                <p className="text-sm text-[#3a3d4a] leading-relaxed">{t.text}</p>
+  1002→                <div className="flex gap-0.5 mt-3">
+  1003→                  {[1, 2, 3, 4, 5].map((s) => (
+  1004→                    <Star key={s} className="w-3.5 h-3.5 text-[#c9a84c] fill-[#c9a84c]" />
+  1005→                  ))}
+  1006→                </div>
+  1007→              </motion.div>
+  1008→            ))}
+  1009→          </div>
+  1010→        </div>
+  1011→      </section>
+  1012→
+  1013→      {/* ── CTA SECTION ── */}
+  1014→      <section className="bg-[#0f1117] py-16 px-5 text-center relative overflow-hidden">
+  1015→        <div className="absolute top-[-50px] left-1/2 -translate-x-1/2 w-[400px] h-[400px] bg-[rgba(201,168,76,0.1)] rounded-full pointer-events-none" />
+  1016→
+  1017→        <motion.div
+  1018→          initial={{ opacity: 0 }}
+  1019→          whileInView={{ opacity: 1 }}
+  1020→          viewport={{ once: true }}
+  1021→          className="max-w-lg mx-auto relative z-10"
+  1022→        >
+  1023→          <h2 className="text-2xl sm:text-3xl font-black text-white mb-4">
+  1024→            جاهز لتسويق عقاري <span className="text-[#c9a84c]">أسرع وأقنع</span>؟
+  1025→          </h2>
+  1026→          <p className="text-white/50 text-sm leading-relaxed mb-8">
+  1027→            جرّب الأداة المجانية الآن — أو انتقل للنسخة الكاملة واحصل على محتوى تسويقي شامل
+  1028→            لكل عقاراتك
+  1029→          </p>
+  1030→          <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+  1031→            <button
+  1032→              onClick={() => {
+  1033→                document.querySelector("header")?.scrollIntoView({ behavior: "smooth" });
+  1034→                setTimeout(() => handleReset(), 500);
+  1035→              }}
+  1036→              className="bg-[#c9a84c] text-[#0f1117] font-black text-sm px-8 py-3.5 rounded-[14px] cursor-pointer transition-all hover:-translate-y-0.5 hover:shadow-[0_8px_28px_rgba(201,168,76,0.45)] shadow-[0_4px_20px_rgba(201,168,76,0.35)] flex items-center gap-2"
+  1037→            >
+  1038→              <Zap className="w-4 h-4" />
+  1039→              جرّب الأداة المجانية
+  1040→            </button>
+  1041→            <a
+  1042→              href="https://sada-elaqar.vercel.app"
+  1043→              target="_blank"
+  1044→              rel="noopener noreferrer"
+  1045→              className="border-[1.5px] border-white/20 text-white font-bold text-sm px-8 py-3.5 rounded-[14px] no-underline hover:border-[#c9a84c] hover:text-[#c9a84c] transition-colors flex items-center gap-2"
+  1046→            >
+  1047→              <TrendingUp className="w-4 h-4" />
+  1048→              النسخة الكاملة
+  1049→            </a>
+  1050→          </div>
+  1051→        </motion.div>
+  1052→      </section>
+  1053→
+  1054→      {/* ── FOOTER ── */}
+  1055→      <footer className="mt-auto text-center py-6 px-5 text-xs text-[#aaa] border-t border-[#e2e4ed] bg-white">
+  1056→        أداة مجانية من{" "}
+  1057→        <a
+  1058→          href="https://sada-elaqar.vercel.app"
+  1059→          target="_blank"
+  1060→          rel="noopener noreferrer"
+  1061→          className="text-[#c9a84c] no-underline"
+  1062→        >
+  1063→          صدى العقار
+  1064→        </a>{" "}
+  1065→        — مساعد التسويق العقاري للسوق العربي
+  1066→      </footer>
+  1067→
+  1068→      {/* ── FLOATING WHATSAPP BUTTON ── */}
+  1069→      <a
+  1070→        href="https://wa.me/213696212465?text=مرحباً، أريد الاستفسار عن صدى العقار"
+  1071→        target="_blank"
+  1072→        rel="noopener noreferrer"
+  1073→        className="fixed bottom-6 left-6 z-50 w-14 h-14 bg-[#25D366] rounded-full flex items-center justify-center shadow-[0_4px_20px_rgba(37,211,102,0.4)] hover:scale-110 transition-transform"
+  1074→        title="تواصل عبر واتساب"
+  1075→      >
+  1076→        <Phone className="w-6 h-6 text-white" />
+  1077→      </a>
+  1078→
+  1079→      {/* ── LEAD POPUP (after scroll) ── */}
+  1080→      <AnimatePresence>
+  1081→        {showLeadForm && !leadSubmitted && (
+  1082→          <motion.div
+  1083→            initial={{ opacity: 0 }}
+  1084→            animate={{ opacity: 1 }}
+  1085→            exit={{ opacity: 0 }}
+  1086→            className="fixed inset-0 z-[100] bg-black/50 flex items-center justify-center p-4"
+  1087→            onClick={() => setShowLeadForm(false)}
+  1088→          >
+  1089→            <motion.div
+  1090→              initial={{ scale: 0.9, opacity: 0 }}
+  1091→              animate={{ scale: 1, opacity: 1 }}
+  1092→              exit={{ scale: 0.9, opacity: 0 }}
+  1093→              onClick={(e) => e.stopPropagation()}
+  1094→              className="bg-white rounded-2xl p-6 max-w-md w-full relative"
+  1095→            >
+  1096→              <button
+  1097→                onClick={() => setShowLeadForm(false)}
+  1098→                className="absolute top-4 left-4 text-[#aaa] hover:text-[#0f1117] transition-colors cursor-pointer"
+  1099→              >
+  1100→                <X className="w-5 h-5" />
+  1101→              </button>
+  1102→              <div className="text-center mb-5">
+  1103→                <div className="w-12 h-12 bg-[#c9a84c]/10 rounded-full flex items-center justify-center mx-auto mb-3">
+  1104→                  <Star className="w-6 h-6 text-[#c9a84c]" />
+  1105→                </div>
+  1106→                <h3 className="text-lg font-bold text-[#0f1117] mb-1">
+  1107→                  🎁 احصل على وصول مبكر مجاناً
+  1108→                </h3>
+  1109→                <p className="text-xs text-[#3a3d4a]">
+  1110→                  سجّل الآن واحصل على شهر كامل مجاناً عند إطلاق النسخة الكاملة
+  1111→                </p>
+  1112→              </div>
+  1113→
+  1114→              <div className="space-y-3">
+  1115→                <input
+  1116→                  type="text"
+  1117→                  value={leadData.name}
+  1118→                  onChange={(e) => handleLeadChange("name", e.target.value)}
+  1119→                  placeholder="الاسم الكامل"
+  1120→                  className="w-full text-sm bg-[#f5f6fa] border-[1.5px] border-[#e2e4ed] rounded-xl py-3 px-4 focus:border-[#c9a84c] focus:bg-white transition-all font-[Cairo] outline-none"
+  1121→                />
+  1122→                <input
+  1123→                  type="tel"
+  1124→                  value={leadData.whatsapp}
+  1125→                  onChange={(e) => handleLeadChange("whatsapp", e.target.value)}
+  1126→                  placeholder="رقم الواتساب *"
+  1127→                  className="w-full text-sm bg-[#f5f6fa] border-[1.5px] border-[#e2e4ed] rounded-xl py-3 px-4 focus:border-[#c9a84c] focus:bg-white transition-all font-[Cairo] outline-none"
+  1128→                  dir="ltr"
+  1129→                />
+  1130→                <button
+  1131→                  onClick={async () => {
+  1132→                    if (!leadData.whatsapp) return;
+  1133→                    try {
+  1134→                      const res = await fetch("/api/capture-lead", {
+  1135→                        method: "POST",
+  1136→                        headers: { "Content-Type": "application/json" },
+  1137→                        body: JSON.stringify({
+  1138→                          ...leadData,
+  1139→                          propType: formData.propType,
+  1140→                          purpose: formData.purpose,
+  1141→                          city: formData.city,
+  1142→                        }),
+  1143→                      });
+  1144→                      const data = await res.json();
+  1145→                      if (data.leadId) {
+  1146→                        setLeadId(data.leadId);
+  1147→                        setLeadSubmitted(true);
+  1148→                        setShowLeadForm(false);
+  1149→                      }
+  1150→                    } catch {
+  1151→                      // silently fail
+  1152→                    }
+  1153→                  }}
+  1154→                  className="w-full bg-[#c9a84c] text-[#0f1117] font-black text-sm py-3 rounded-xl cursor-pointer transition-all hover:shadow-[0_8px_28px_rgba(201,168,76,0.45)] shadow-[0_4px_20px_rgba(201,168,76,0.35)]"
+  1155→                >
+  1156→                  🚀 سجّل واحصل على وصول مبكر
+  1157→                </button>
+  1158→              </div>
+  1159→              <p className="text-center text-[10px] text-[#aaa] mt-3">
+  1160→                🔒 بياناتك محفوظة بأمان
+  1161→              </p>
+  1162→            </motion.div>
+  1163→          </motion.div>
+  1164→        )}
+  1165→      </AnimatePresence>
+  1166→
+  1167→      {/* ── Exit-intent trigger (simplified: show lead popup after 30s on page) ── */}
+  1168→      <ExitIntentTrigger onTrigger={() => setShowLeadForm(true)} leadSubmitted={leadSubmitted} />
+  1169→    </div>
+  1170→  );
+  1171→}
+  1172→
+  1173→// ─── Exit Intent Component ─────────────────────────────────
+  1174→function ExitIntentTrigger({
+  1175→  onTrigger,
+  1176→  leadSubmitted,
+  1177→}: {
+  1178→  onTrigger: () => void;
+  1179→  leadSubmitted: boolean;
+  1180→}) {
+  1181→  useEffect(() => {
+  1182→    if (leadSubmitted) return;
+  1183→
+  1184→    // Show popup after 45 seconds if not submitted
+  1185→    const timer = setTimeout(() => {
+  1186→      const dismissed = sessionStorage.getItem("sada_popup_dismissed");
+  1187→      if (!dismissed) {
+  1188→        onTrigger();
+  1189→      }
+  1190→    }, 45000);
+  1191→
+  1192→    // Also trigger on mouse leave (desktop exit intent)
+  1193→    const handleMouseLeave = (e: MouseEvent) => {
+  1194→      if (e.clientY < 0 && !leadSubmitted) {
+  1195→        const dismissed = sessionStorage.getItem("sada_popup_dismissed");
+  1196→        if (!dismissed) {
+  1197→          onTrigger();
+  1198→        }
+  1199→      }
+  1200→    };
+  1201→
+  1202→    document.addEventListener("mouseleave", handleMouseLeave);
+  1203→
+  1204→    return () => {
+  1205→      clearTimeout(timer);
+  1206→      document.removeEventListener("mouseleave", handleMouseLeave);
+  1207→    };
+  1208→  }, [onTrigger, leadSubmitted]);
+  1209→
+  1210→  return null;
+  1211→}
+  1212→
