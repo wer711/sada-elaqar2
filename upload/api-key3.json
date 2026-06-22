@@ -1,0 +1,28 @@
+{
+  "choices": [
+    {
+      "finish_reason": "stop",
+      "index": 0,
+      "message": {
+        "content": "The screenshot shows a mobile browser (likely Safari on iOS, given the UI elements) displaying a website at `da-elaqar.netlify.app`. Here's a detailed breakdown:\n\n\n### **Top Browser Bar**\n- **Status icons**: Time (13:47), battery (100%), Wi-Fi, and cellular signal indicators.\n- **Navigation**: Back arrow, tab count (15), plus (+) to open a new tab, address bar with the URL `da-elaqar.netlify.app`, and a home icon.\n\n\n### **Website Header**\n- **Left**: A gold button with Arabic text: `رفع الاعلان الخاص بك` (Upload Your Ad) and a small icon (possibly a document or upload symbol).\n- **Center**: Text in Arabic: `شبكة الاعلانات` (Advertising Network) with a smaller subtitle: `الاعلانات المجانية عبر الانترنت` (Free Ads on the Internet).\n- **Right**: A gold home icon button.\n\n\n### **Main Form Content**\nThe page appears to be a form for creating or editing an advertisement, with the following fields (all in Arabic):\n\n1. **النوع / التصنيف** (Type / Category):  \n   A dropdown field with the placeholder `اختر النوع` (Choose Type).\n\n2. **الوصف (اختياري)** (Description (Optional)):  \n   A text input field (empty).\n\n3. **السعر (د.إ)** (Price (AED)):  \n   A text input field with the value `200`.\n\n4. **عدد الصور** (Number of Images):  \n   A dropdown field with the value `3 صور` (3 images).\n\n5. **حالة العرض** (Ad Status):  \n   A dropdown field with the placeholder `اختر حالة العرض` (Choose Ad Status).\n\n6. **الموقع** (Location):  \n   A text input field with the value `25000` (likely a postal code or location identifier).\n\n7. **Warning Message**:  \n   A red-bordered box with a yellow warning icon (⚠️) and text:  \n   `هذا العرض يبدو أنه غير متوفر حالياً — قد يكون قد انتهى من قبل المالك`  \n   (This ad appears to be unavailable now — it may have expired or been removed by the owner).\n\n\n### **Bottom Section**\n- **Green Call Button**: A circular green button with a white phone icon (likely for contacting the ad owner).\n- **Gold Button**: A large gold button with text: `ارسال الطلب لاتمام الاعلان` (Send Request to Complete the Ad) and a lightning bolt icon (possibly for quick submission).\n\n\n### **Key Observations**\n- **Error Message**: Yes, the red warning box indicates the ad is unavailable (expired or removed).\n- **API Key**: No API key is visible anywhere on the page.\n- **Content Summary**: The page is an Arabic-language ad creation/editing form with fields for category, description, price, images, status, and location, plus a warning about the ad's availability and submission buttons.\n\n\nThe overall design is clean, with a focus on Arabic text and mobile-friendly elements (dropdowns, input fields, and action buttons).",
+        "role": "assistant"
+      }
+    }
+  ],
+  "created": 1782132737,
+  "id": "2026062220520526ae592ba7da4868",
+  "model": "glm-4.6v",
+  "object": "chat.completion",
+  "request_id": "2026062220520526ae592ba7da4868",
+  "usage": {
+    "completion_tokens": 680,
+    "completion_tokens_details": {
+      "reasoning_tokens": 0
+    },
+    "prompt_tokens": 3407,
+    "prompt_tokens_details": {
+      "cached_tokens": 6
+    },
+    "total_tokens": 4087
+  }
+}

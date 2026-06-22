@@ -1,6 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
-import ZAI from "z-ai-web-dev-sdk";
+import { GoogleGenerativeAI } from "@google/generative-ai";
 import { db } from "@/lib/db";
+
+// ─── Gemini Setup ──────────────────────────────────────────
+function getGeminiClient() {
+  const apiKey = process.env.GEMINI_API_KEY;
+  if (!apiKey) {
+    throw new Error("GEMINI_API_KEY is not configured. Add it to .env file.");
+  }
+  return new GoogleGenerativeAI(apiKey);
+}
 
 // ─── Invisible Smart Rate Limiting ──────────────────────────
 const GLOBAL_DAILY_SOFT_LIMIT = 80;
@@ -37,28 +46,6 @@ function incrementIpCount(ip: string) {
     ipCounts.set(ip, { count: 1, date: today });
   } else {
     entry.count++;
-  }
-}
-
-// ─── Tracking Helper ────────────────────────────────────────
-async function trackEvent(event: string, data: Record<string, string>) {
-  // Store tracking events in DB for later analysis
-  try {
-    await db.titleGeneration.create({
-      data: {
-        propType: data.propType || "track",
-        purpose: data.purpose || event,
-        city: data.city || data.source || "unknown",
-        area: data.utm_source || null,
-        space: data.utm_medium || null,
-        rooms: data.utm_campaign || null,
-        feature: data.utm_content || null,
-        price: data.ip || null,
-        results: JSON.stringify(data),
-      },
-    });
-  } catch {
-    // silently fail
   }
 }
 
@@ -153,39 +140,42 @@ ${extras ? `- تفاصيل إضافية: ${extras}` : ""}
 
 اكتب بلهجة عربية فصيحة مناسبة لمدينة ${city}. لا تستخدم كلمات إنجليزية.`;
 
-    // ── AI Generation ──
-    const zai = await ZAI.create();
+    // ── Gemini AI Generation ──
+    const genAI = getGeminiClient();
+    const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
 
-    const completion = await zai.chat.completions.create({
-      messages: [
-        {
-          role: "assistant",
-          content:
-            "أنت مساعد تسويق عقاري محترف. أجب فقط بصيغة JSON كما هو مطلوب بدون أي نص إضافي.",
-        },
-        { role: "user", content: prompt },
-      ],
-      thinking: { type: "disabled" },
-    });
-
-    const text = completion.choices[0]?.message?.content || "";
+    const result = await model.generateContent(prompt);
+    const text = result.response.text();
 
     let parsed;
     try {
       const clean = text.replace(/```json|```/g, "").trim();
       parsed = JSON.parse(clean);
     } catch {
-      return NextResponse.json(
-        { error: "تعذّر تحليل الاستجابة، حاول مرة أخرى" },
-        { status: 500 }
-      );
+      // Try to extract JSON from the response
+      const jsonMatch = text.match(/\{[\s\S]*"titles"[\s\S]*\}/);
+      if (jsonMatch) {
+        try {
+          parsed = JSON.parse(jsonMatch[0]);
+        } catch {
+          return NextResponse.json(
+            { error: "تعذّر تحليل الاستجابة، حاول مرة أخرى" },
+            { status: 500 }
+          );
+        }
+      } else {
+        return NextResponse.json(
+          { error: "تعذّر تحليل الاستجابة، حاول مرة أخرى" },
+          { status: 500 }
+        );
+      }
     }
 
     // ── Track usage ──
     dailyCount++;
     incrementIpCount(ip);
 
-    // Save to database with tracking data
+    // Save to database
     try {
       await db.titleGeneration.create({
         data: {
@@ -204,21 +194,6 @@ ${extras ? `- تفاصيل إضافية: ${extras}` : ""}
       console.error("DB save error:", dbError);
     }
 
-    // Track UTM/source data
-    if (utm_source || utm_medium || utm_campaign) {
-      trackEvent("generation", {
-        propType,
-        purpose,
-        city,
-        utm_source: utm_source || "",
-        utm_medium: utm_medium || "",
-        utm_campaign: utm_campaign || "",
-        utm_content: utm_content || "",
-        ip,
-        source: "title-tool",
-      }).catch(() => {});
-    }
-
     const remaining = Math.max(0, PER_IP_DAILY_LIMIT - getIpCount(ip));
 
     return NextResponse.json({
@@ -227,6 +202,14 @@ ${extras ? `- تفاصيل إضافية: ${extras}` : ""}
     });
   } catch (error) {
     console.error("Generation error:", error);
+    const message = error instanceof Error ? error.message : "حدث خطأ أثناء التوليد";
+    // Check if it's a Gemini API key error
+    if (message.includes("GEMINI_API_KEY") || message.includes("API key")) {
+      return NextResponse.json(
+        { error: "مفتاح API غير مُعدّ — يرجى التواصل مع المسؤول" },
+        { status: 500 }
+      );
+    }
     return NextResponse.json(
       { error: "حدث خطأ أثناء التوليد — تحقق من اتصالك وحاول مجدداً" },
       { status: 500 }

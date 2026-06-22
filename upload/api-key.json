@@ -1,0 +1,28 @@
+{
+  "choices": [
+    {
+      "finish_reason": "stop",
+      "index": 0,
+      "message": {
+        "content": "The screenshot does not contain an API key.",
+        "role": "assistant"
+      }
+    }
+  ],
+  "created": 1782132696,
+  "id": "20260622205133b82c28895e474840",
+  "model": "glm-4.6v",
+  "object": "chat.completion",
+  "request_id": "20260622205133b82c28895e474840",
+  "usage": {
+    "completion_tokens": 10,
+    "completion_tokens_details": {
+      "reasoning_tokens": 0
+    },
+    "prompt_tokens": 3373,
+    "prompt_tokens_details": {
+      "cached_tokens": 4
+    },
+    "total_tokens": 3383
+  }
+}

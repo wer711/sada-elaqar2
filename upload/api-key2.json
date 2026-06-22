@@ -1,0 +1,28 @@
+{
+  "choices": [
+    {
+      "finish_reason": "stop",
+      "index": 0,
+      "message": {
+        "content": "100% l. l. 13:47\n15 +  da-elaqar.netlify.app\nصفحة العروض\nصفحة عرض العقارات\nالعنوان / الموقع\nمنطقة الرياض\n(اختياري) تفاصيل إضافية\nالمساحة (م²)\n200\nعدد الغرف\n3 غرفة\nنوع العقار\nشقة سكنية\nالسعر\n25000\nهذا العقار ليس في نطاق الخريطة — يرجى التحقق من الإحداثيات\nتواصل مع المالك الآن",
+        "role": "assistant"
+      }
+    }
+  ],
+  "created": 1782132711,
+  "id": "20260622205148429ed2aa819f4e5f",
+  "model": "glm-4.6v",
+  "object": "chat.completion",
+  "request_id": "20260622205148429ed2aa819f4e5f",
+  "usage": {
+    "completion_tokens": 128,
+    "completion_tokens_details": {
+      "reasoning_tokens": 0
+    },
+    "prompt_tokens": 3408,
+    "prompt_tokens_details": {
+      "cached_tokens": 8
+    },
+    "total_tokens": 3536
+  }
+}
