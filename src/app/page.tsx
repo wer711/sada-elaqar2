@@ -21,10 +21,12 @@ import {
   MessageCircle,
   AlertTriangle,
   Building2,
-  HandCoins,
   Eye,
   BarChart3,
   ExternalLink,
+  Frown,
+  PartyPopper,
+  Lightbulb,
 } from "lucide-react";
 
 // ─── Types ─────────────────────────────────────────────────
@@ -44,6 +46,41 @@ interface FormData {
   price: string;
 }
 
+// ─── Tracking Helper ────────────────────────────────────────
+const MAIN_CTA_BASE = "https://sada-elaqar.vercel.app";
+
+function getUtmParams(): Record<string, string> {
+  if (typeof window === "undefined") return {};
+  const params = new URLSearchParams(window.location.search);
+  return {
+    utm_source: params.get("utm_source") || "",
+    utm_medium: params.get("utm_medium") || "",
+    utm_campaign: params.get("utm_campaign") || "",
+    utm_content: params.get("utm_content") || "",
+  };
+}
+
+function trackedUrl(path: string, utmContent: string): string {
+  const utm = getUtmParams();
+  const url = new URL(path, MAIN_CTA_BASE);
+  // Always add our own tracking
+  url.searchParams.set("utm_source", utm.utm_source || "title-tool");
+  url.searchParams.set("utm_medium", utm.utm_medium || "free-tool");
+  url.searchParams.set("utm_campaign", utm.utm_campaign || "landing");
+  url.searchParams.set("utm_content", utmContent);
+  return url.toString();
+}
+
+function trackEvent(event: string, data?: Record<string, string>) {
+  // Fire-and-forget tracking via /api/track endpoint
+  const utm = getUtmParams();
+  fetch("/api/track", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ event, ...utm, ...data, timestamp: new Date().toISOString() }),
+  }).catch(() => {});
+}
+
 // ─── Constants ─────────────────────────────────────────────
 const INITIAL_FORM: FormData = {
   propType: "",
@@ -60,30 +97,38 @@ const PLATFORM_COLORS: Record<string, string> = {
   واتساب: "#25D366",
   إنستغرام: "#E1306C",
   "تويتر / X": "#000000",
+  فيسبوك: "#1877F2",
+  "سناب شات": "#FFFC00",
   لينكدإن: "#0A66C2",
 };
 
-const PAIN_POINTS = [
+const PLATFORM_TEXT_DARK: Record<string, boolean> = {
+  "سناب شات": true,
+};
+
+// ─── Pain → Solution Flow ──────────────────────────────────
+const PAIN_SECTIONS = [
   {
-    icon: <Clock className="w-6 h-6 text-red-400" />,
-    title: "ساعات مهدورة",
-    desc: "تقضي ساعة في كتابة وصف واحد — والمنافسون ينشرون 10 إعلانات في نفس الوقت",
+    icon: <Frown className="w-6 h-6" />,
+    question: "هل تشعر أن إعلاناتك العقارية لا تجذب أحداً؟",
+    pain: "تكتب وصفاً طويلاً لمشغّلك العقاري — وينتهي الأمر بصفر تفاعل. عقارك يضيع بين آلاف الإعلانات المتشابهة، والمشتري الجادّ لا يلاحظه أبداً.",
+    feeling: "الإحباط عندما ترى إعلانك يموت بلا تعليق ولا اتصال",
   },
   {
-    icon: <HandCoins className="w-6 h-6 text-red-400" />,
-    title: "تكاليف عالية بلا ضمان",
-    desc: "وكالات التسويق تأخذ مبالغ شهرية ثابتة — بلا ضمان جودة أو نتيجة",
+    question: "هل تقضي ساعات في كتابة وصف واحد فقط؟",
+    pain: "تقضي 45 دقيقة على وصف عقار واحد — وتعيد كتابته لكل منصة. واتساب، إنستغرام، فيسبوك... كل واحدة أسلوب مختلف. في اليوم تضيع 3-4 ساعات فقط على الكتابة.",
+    feeling: "الإرهاق من تكرار نفس العمل يومياً بلا نهاية",
   },
   {
-    icon: <Eye className="w-6 h-6 text-red-400" />,
-    title: "إعلانات لا يراها أحد",
-    desc: "محتوى ضعيف = صفر تفاعل = عقارك يضيع بين آلاف الإعلانات",
+    question: "هل تدفع لوكالات تسويق بلا ضمان نتيجة؟",
+    pain: "وكالة التسويق تأخذ $500+ شهرياً — والنتيجة؟ محتوى عام لا يعكس قيمة عقارك. لا تخصيص، لا لهجة محلية، ولا أسلوب يقنع المشتري الجادّ.",
+    feeling: "الشعور بأن أموالك تذهب سُداً بلا عائد حقيقي",
   },
 ];
 
 const BEFORE_AFTER = [
   { label: "كتابة وصف عقار", before: "45 دقيقة", after: "7 ثوانٍ" },
-  { label: "تكييف لكل منصة", before: "إعادة كتابة 4 مرات", after: "تلقائي" },
+  { label: "تكييف لكل منصة", before: "إعادة كتابة 6 مرات", after: "تلقائي" },
   { label: "اختيار هاشتاجات", before: "بحث يدوي", after: "ذكي ومدروس" },
   { label: "التكلفة الشهرية", before: "$500+ وكالة", after: "مجاناً" },
 ];
@@ -109,17 +154,32 @@ const TESTIMONIALS = [
   },
 ];
 
-const CITIES = {
-  السعودية: ["الرياض", "جدة", "مكة المكرمة", "الدمام", "المدينة المنورة", "الخبر"],
-  الإمارات: ["دبي", "أبوظبي", "الشارقة", "عجمان", "رأس الخيمة"],
-  الخليج: ["الدوحة", "الكويت", "مسقط", "المنامة"],
-  أخرى: ["القاهرة", "عمّان", "بيروت", "الدار البيضاء"],
+// ─── Expanded Cities ────────────────────────────────────────
+const CITIES: Record<string, string[]> = {
+  "🇸🇦 السعودية": ["الرياض", "جدة", "مكة المكرمة", "المدينة المنورة", "الدمام", "الخبر", "الطائف", "تبوك", "أبها", "نجران"],
+  "🇦🇪 الإمارات": ["دبي", "أبوظبي", "الشارقة", "عجمان", "رأس الخيمة", "العين", "الفجيرة"],
+  "🇶🇦 قطر": ["الدوحة", "الوكرة", "الخور"],
+  "🇰🇼 الكويت": ["الكويت العاصمة", "حولي", "الأحمدي", "الفروانية"],
+  "🇧🇭 البحرين": ["المنامة", "المحرق", "الرفاع"],
+  "🇴🇲 عُمان": ["مسقط", "صلالة", "صحار", "نزوى"],
+  "🇪🇬 مصر": ["القاهرة", "الإسكندرية", "الجيزة", "المنصورة", "أسيوط", "الأقصر"],
+  "🇯🇴 الأردن": ["عمّان", "إربد", "العقبة", "الزرقاء"],
+  "🇮🇶 العراق": ["بغداد", "أربيل", "البصرة", "النجف", "كربلاء", "السليمانية"],
+  "🇱🇧 لبنان": ["بيروت", "طرابلس", "صيدا", "جونيه"],
+  "🇱🇾 ليبيا": ["طرابلس", "بنغازي", "مصراتة"],
+  "🇹🇳 تونس": ["تونس العاصمة", "صفاقس", "سوسة"],
+  "🇩🇿 الجزائر": ["الجزائر العاصمة", "وهران", "قسنطينة", "عنابة", "باتنة", "سطيف", "تلمسان", "البليدة"],
+  "🇲🇦 المغرب": ["الدار البيضاء", "الرباط", "مراكش", "فاس", "طنجة", "أغادير", "مكناس"],
+  "🇸🇩 السودان": ["الخرطوم", "أم درمان", "بورتسودان"],
+  "🇾🇪 اليمن": ["صنعاء", "عدن", "تعز"],
+  "🇵🇸 فلسطين": ["رام الله", "غزة", "نابلس", "الخليل"],
+  "🇹🇷 تركيا": ["إسطنبول", "أنقرة", "أنطاليا", "بورصة"],
 };
 
 const PROP_TYPES = {
   سكني: ["شقة", "فيلا", "استوديو", "بنتهاوس", "دوبلكس", "شاليه", "عمارة سكنية"],
-  تجاري: ["محل تجاري", "مكتب تجاري"],
-  أراضي: ["أرض سكنية", "أرض تجارية"],
+  تجاري: ["محل تجاري", "مكتب تجاري", "مستودع", "مصنع"],
+  أراضي: ["أرض سكنية", "أرض تجارية", "أرض زراعية", "أرض صناعية"],
 };
 
 const FEATURES = [
@@ -132,6 +192,11 @@ const FEATURES = [
   "مسبح خاص",
   "فرصة استثمارية",
   "تسليم فوري",
+  "نظام ذكي",
+  "حديقة خاصة",
+  "موقف سيارات",
+  "أمن وحراسة 24 ساعة",
+  "قريب من المترو",
 ];
 
 // ─── Hooks ─────────────────────────────────────────────────
@@ -185,7 +250,6 @@ function useCountdown() {
     }
     targetRef.current = target;
 
-    // Use requestAnimationFrame to defer setState out of sync effect body
     const raf = requestAnimationFrame(() => {
       setTimeLeft(calcRemaining(target));
     });
@@ -217,6 +281,11 @@ export default function SadaLandingPage() {
   const userCount = useUserCounter();
   const countdown = useCountdown();
 
+  // Track page view on mount
+  useEffect(() => {
+    trackEvent("page_view");
+  }, []);
+
   const handleFormChange = useCallback(
     (field: keyof FormData, value: string) => {
       setFormData((prev) => ({ ...prev, [field]: value }));
@@ -236,27 +305,32 @@ export default function SadaLandingPage() {
   const handleGenerate = async () => {
     if (!validateForm()) return;
     if (limitReached) {
-      window.open("https://sada-elaqar.vercel.app", "_blank");
+      trackEvent("click_limited_cta", { propType: formData.propType, city: formData.city });
+      window.open(trackedUrl("/", "limited-cta"), "_blank");
       return;
     }
 
     setFormStep("loading");
     setError("");
 
+    // Track generation attempt
+    trackEvent("generate_attempt", { propType: formData.propType, city: formData.city });
+
     try {
+      const utm = getUtmParams();
       const res = await fetch("/api/generate-titles", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({ ...formData, ...utm }),
       });
 
       const data = await res.json();
 
-      // Handle rate limit
       if (res.status === 429) {
         setLimitReached(true);
         setError(data.message || "تم الوصول للحد اليومي");
         setFormStep("form");
+        trackEvent("rate_limit_hit", { city: formData.city });
         return;
       }
 
@@ -269,6 +343,7 @@ export default function SadaLandingPage() {
         setRemainingUses(data._meta.remaining);
       }
       setFormStep("results");
+      trackEvent("generate_success", { propType: formData.propType, city: formData.city });
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : "حدث خطأ أثناء التوليد";
       setError(message);
@@ -280,6 +355,7 @@ export default function SadaLandingPage() {
     navigator.clipboard.writeText(text);
     setCopiedIdx(idx);
     setTimeout(() => setCopiedIdx(null), 2200);
+    trackEvent("copy_title", { platform: titles[idx]?.platform || "" });
   };
 
   const handleReset = () => {
@@ -289,17 +365,19 @@ export default function SadaLandingPage() {
     setError("");
   };
 
-  const MAIN_CTA_URL = "https://sada-elaqar.vercel.app";
+  const countryCount = Object.keys(CITIES).length;
+  const totalCities = Object.values(CITIES).reduce((a, b) => a + b.length, 0);
 
   return (
     <div className="min-h-screen flex flex-col">
       {/* ── HEADER ── */}
       <header className="bg-[#0f1117] px-4 sm:px-6 py-4 flex items-center justify-between sticky top-0 z-50">
         <a
-          href={MAIN_CTA_URL}
+          href={trackedUrl("/", "header-logo")}
           target="_blank"
           rel="noopener noreferrer"
           className="flex items-center gap-3 no-underline"
+          onClick={() => trackEvent("click_header_logo")}
         >
           <div className="w-9 h-9 bg-[#c9a84c] rounded-full flex items-center justify-center flex-shrink-0">
             <Home className="w-4 h-4 text-[#0f1117]" />
@@ -315,10 +393,11 @@ export default function SadaLandingPage() {
             <span>{userCount.toLocaleString("ar-SA")} مستخدم</span>
           </div>
           <a
-            href={MAIN_CTA_URL}
+            href={trackedUrl("/", "header-cta")}
             target="_blank"
             rel="noopener noreferrer"
             className="bg-[#c9a84c] text-[#0f1117] font-bold text-sm px-4 py-2 rounded-lg no-underline hover:opacity-90 transition-opacity whitespace-nowrap flex items-center gap-1.5"
+            onClick={() => trackEvent("click_header_cta")}
           >
             جرّب النسخة الكاملة
             <ExternalLink className="w-3.5 h-3.5" />
@@ -359,16 +438,16 @@ export default function SadaLandingPage() {
             </div>
           </div>
 
-          {/* Hook Headline */}
+          {/* Hook Headline — Personal, emotional */}
           <h1 className="text-white text-2xl sm:text-4xl lg:text-5xl font-black leading-snug max-w-2xl mx-auto mb-4">
-            هل تعاني من تسويق عقاراتك
+            عقارك يستاهل أفضل من
             <br />
-            <span className="text-[#c9a84c]">يدوياً وبجهد كبير؟</span>
+            <span className="text-[#c9a84c]">إعلان مكتوب على السريع</span>
           </h1>
 
           {/* Sub-hook */}
           <p className="text-white/50 text-base sm:text-lg max-w-xl mx-auto leading-relaxed mb-6">
-            جرّب الآن — أدخل بيانات عقارك وشاهد كيف يحوّلها الذكاء الاصطناعي إلى عناوين تسويقية محترفة في <span className="text-[#c9a84c] font-bold">7 ثوانٍ فقط</span>
+            جرّب الآن — أدخل بيانات عقارك واحصل على <span className="text-[#c9a84c] font-bold">6 عناوين تسويقية</span> مخصصة لكل منصة في 7 ثوانٍ فقط
           </p>
 
           {/* Trust badges */}
@@ -380,13 +459,13 @@ export default function SadaLandingPage() {
               <Clock className="w-3.5 h-3.5 text-[#c9a84c]" /> نتيجة فورية
             </span>
             <span className="flex items-center gap-1.5">
-              <Globe className="w-3.5 h-3.5 text-[#c9a84c]" /> بلهجة بلدك
+              <Globe className="w-3.5 h-3.5 text-[#c9a84c]" /> {countryCount} دولة عربية
             </span>
           </div>
         </motion.div>
       </section>
 
-      {/* ── PAIN POINTS ── */}
+      {/* ── PAIN → FEEL → SOLUTION ── */}
       <section className="bg-[#fef2f2] py-10 px-5">
         <div className="max-w-3xl mx-auto">
           <motion.div
@@ -395,29 +474,50 @@ export default function SadaLandingPage() {
             viewport={{ once: true }}
             className="text-center mb-8"
           >
-            <h2 className="text-xl sm:text-2xl font-black text-[#7f1d1d] mb-2">
-              قبل صدى العقار — هل تعاني من هذه المشاكل؟
+            <h2 className="text-xl sm:text-2xl font-black text-[#7f1d1d] mb-1">
+              هل يبدو لك هذا مألوفاً؟
             </h2>
+            <p className="text-xs text-[#991b1b]/60">لا تقلق — أغلب وكلاء العقارات يعانون من نفس الشيء</p>
           </motion.div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {PAIN_POINTS.map((item, idx) => (
+          <div className="flex flex-col gap-5">
+            {PAIN_SECTIONS.map((item, idx) => (
               <motion.div
                 key={idx}
                 initial={{ opacity: 0, y: 15 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
-                transition={{ delay: idx * 0.1 }}
+                transition={{ delay: idx * 0.12 }}
                 className="bg-white rounded-2xl p-5 border border-red-100 shadow-sm"
               >
-                <div className="w-10 h-10 bg-red-50 rounded-xl flex items-center justify-center mb-3">
-                  {item.icon}
+                <h3 className="font-black text-[#991b1b] text-base mb-2">
+                  {item.question}
+                </h3>
+                <p className="text-sm text-[#7f1d1d]/70 leading-relaxed mb-3">
+                  {item.pain}
+                </p>
+                <div className="bg-[#fef2f2] rounded-xl px-4 py-2.5 flex items-start gap-2">
+                  <Frown className="w-4 h-4 text-red-400 mt-0.5 flex-shrink-0" />
+                  <p className="text-xs text-[#991b1b] font-semibold italic">
+                    {item.feeling}
+                  </p>
                 </div>
-                <h3 className="font-bold text-[#991b1b] text-sm mb-1">{item.title}</h3>
-                <p className="text-xs text-[#7f1d1d]/70 leading-relaxed">{item.desc}</p>
               </motion.div>
             ))}
           </div>
+
+          {/* Solution Bridge */}
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="mt-6 text-center"
+          >
+            <div className="inline-flex items-center gap-2 bg-[#0D7C66] text-white rounded-full px-5 py-2 text-sm font-bold">
+              <Lightbulb className="w-4 h-4" />
+              ماذا لو كان بإمكانك حل كل هذا في 7 ثوانٍ؟
+            </div>
+          </motion.div>
         </div>
       </section>
 
@@ -432,12 +532,12 @@ export default function SadaLandingPage() {
           >
             <div className="inline-flex items-center gap-2 bg-[#c9a84c]/10 border border-[#c9a84c]/30 text-[#c9a84c] rounded-full px-3 py-1 text-xs font-bold mb-3">
               <Sparkles className="w-3.5 h-3.5" />
-              جرّب بنفسك الآن
+              جرّب بنفسك الآن — بدون تسجيل
             </div>
             <h2 className="text-xl sm:text-2xl font-black text-[#0f1117] mb-2">
-              شاهد النتيجة <span className="text-[#c9a84c]">بعينيك</span> — مجاناً
+              شاهد النتيجة <span className="text-[#c9a84c]">بعينيك</span>
             </h2>
-            <p className="text-xs text-[#3a3d4a]">أدخل بيانات أي عقار واحصل على 4 عناوين تسويقية جاهزة للنشر</p>
+            <p className="text-xs text-[#3a3d4a]">أدخل بيانات أي عقار واحصل على 6 عناوين تسويقية لمنصات مختلفة</p>
           </motion.div>
 
           <motion.div
@@ -454,7 +554,7 @@ export default function SadaLandingPage() {
                 </div>
                 <div>
                   <h3 className="text-sm font-bold text-[#0f1117]">مولّد العناوين العقارية</h3>
-                  <p className="text-[11px] text-[#3a3d4a]">بيانات العقار → 4 عناوين فورية</p>
+                  <p className="text-[11px] text-[#3a3d4a]">بيانات العقار → 6 عناوين لمنصات مختلفة</p>
                 </div>
               </div>
               {remainingUses !== null && remainingUses > 0 && (
@@ -475,7 +575,6 @@ export default function SadaLandingPage() {
                   className="p-6"
                 >
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    {/* Property Type */}
                     <div className="flex flex-col gap-1.5">
                       <label className="text-sm font-bold text-[#3a3d4a] flex items-center gap-1.5">
                         نوع العقار <span className="text-[#c9a84c]">*</span>
@@ -499,7 +598,6 @@ export default function SadaLandingPage() {
                       </div>
                     </div>
 
-                    {/* Purpose */}
                     <div className="flex flex-col gap-1.5">
                       <label className="text-sm font-bold text-[#3a3d4a] flex items-center gap-1.5">
                         الغرض <span className="text-[#c9a84c]">*</span>
@@ -519,7 +617,6 @@ export default function SadaLandingPage() {
                       </div>
                     </div>
 
-                    {/* City */}
                     <div className="flex flex-col gap-1.5">
                       <label className="text-sm font-bold text-[#3a3d4a] flex items-center gap-1.5">
                         المدينة <span className="text-[#c9a84c]">*</span>
@@ -531,8 +628,8 @@ export default function SadaLandingPage() {
                           className="w-full text-sm bg-[#f5f6fa] border-[1.5px] border-[#e2e4ed] rounded-[14px] py-3 px-3.5 appearance-none cursor-pointer focus:border-[#c9a84c] focus:shadow-[0_0_0_3px_rgba(201,168,76,0.18)] focus:bg-white transition-all font-[Cairo]"
                         >
                           <option value="">— اختر —</option>
-                          {Object.entries(CITIES).map(([group, cities]) => (
-                            <optgroup key={group} label={group}>
+                          {Object.entries(CITIES).map(([country, cities]) => (
+                            <optgroup key={country} label={country}>
                               {cities.map((c) => (
                                 <option key={c} value={c}>{c}</option>
                               ))}
@@ -543,7 +640,6 @@ export default function SadaLandingPage() {
                       </div>
                     </div>
 
-                    {/* Area */}
                     <div className="flex flex-col gap-1.5">
                       <label className="text-sm font-bold text-[#3a3d4a]">الحي / المنطقة</label>
                       <input
@@ -556,7 +652,6 @@ export default function SadaLandingPage() {
                     </div>
                   </div>
 
-                  {/* Step Divider */}
                   <div className="flex items-center gap-3 my-5 text-[#3a3d4a] text-xs font-semibold">
                     <span className="flex-1 h-px bg-[#e2e4ed]" />
                     تفاصيل إضافية (اختياري)
@@ -621,7 +716,6 @@ export default function SadaLandingPage() {
                     </div>
                   </div>
 
-                  {/* Error */}
                   {error && (
                     <motion.div
                       initial={{ opacity: 0, y: -5 }}
@@ -637,7 +731,7 @@ export default function SadaLandingPage() {
                           <AlertTriangle className="w-4 h-4" />
                           {error}
                           <a
-                            href={MAIN_CTA_URL}
+                            href={trackedUrl("/", "limited-inline")}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="underline font-bold"
@@ -651,7 +745,6 @@ export default function SadaLandingPage() {
                     </motion.div>
                   )}
 
-                  {/* Generate Button */}
                   <button
                     onClick={handleGenerate}
                     className="w-full mt-6 bg-[#c9a84c] text-[#0f1117] font-black text-base py-4 rounded-[14px] cursor-pointer flex items-center justify-center gap-2.5 transition-all hover:-translate-y-0.5 hover:shadow-[0_8px_28px_rgba(201,168,76,0.45)] active:translate-y-0 shadow-[0_4px_20px_rgba(201,168,76,0.35)]"
@@ -673,7 +766,7 @@ export default function SadaLandingPage() {
                 >
                   <div className="w-11 h-11 border-[3px] border-[#e2e4ed] border-t-[#c9a84c] rounded-full animate-spin" />
                   <div className="text-[#3a3d4a] font-semibold text-sm">صدى العقار يكتب لك...</div>
-                  <div className="text-[#aaa] text-xs">يحلّل البيانات ويصيغ أفضل العناوين</div>
+                  <div className="text-[#aaa] text-xs">يحلّل البيانات ويصيغ أفضل العناوين لكل منصة</div>
                 </motion.div>
               )}
 
@@ -693,13 +786,13 @@ export default function SadaLandingPage() {
                     <span className="flex-1 h-px bg-[#edddb0]" />
                   </div>
 
-                  <div className="flex flex-col gap-3">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     {titles.map((item, idx) => (
                       <motion.div
                         key={idx}
                         initial={{ opacity: 0, x: 20 }}
                         animate={{ opacity: 1, x: 0 }}
-                        transition={{ delay: idx * 0.1 }}
+                        transition={{ delay: idx * 0.08 }}
                         onClick={() => handleCopy(item.title, idx)}
                         className={`relative bg-[#f5f6fa] border-[1.5px] rounded-[14px] p-4 cursor-pointer transition-all hover:border-[#c9a84c] hover:shadow-[0_0_0_3px_rgba(201,168,76,0.18)] ${
                           copiedIdx === idx
@@ -708,8 +801,11 @@ export default function SadaLandingPage() {
                         }`}
                       >
                         <span
-                          className="inline-block text-[10px] font-bold text-white rounded-md px-2.5 py-1 mb-2.5"
-                          style={{ background: PLATFORM_COLORS[item.platform] || "#333" }}
+                          className="inline-block text-[10px] font-bold rounded-md px-2.5 py-1 mb-2.5"
+                          style={{
+                            background: PLATFORM_COLORS[item.platform] || "#333",
+                            color: PLATFORM_TEXT_DARK[item.platform] ? "#333" : "#fff",
+                          }}
                         >
                           {item.platform}
                         </span>
@@ -739,40 +835,45 @@ export default function SadaLandingPage() {
                     className="mt-6 bg-gradient-to-bl from-[#0f1117] to-[#1e2235] rounded-2xl p-6 text-center relative overflow-hidden"
                   >
                     <div className="absolute top-[-30px] right-[-30px] w-[120px] h-[120px] bg-[rgba(201,168,76,0.15)] rounded-full pointer-events-none" />
-                    <h3 className="text-white text-base font-extrabold mb-2">
-                      🚀 أعجبتك النتيجة؟ النسخة الكاملة تفعل أكثر بكثير
-                    </h3>
+                    <div className="flex items-center justify-center gap-2 mb-2">
+                      <PartyPopper className="w-5 h-5 text-[#c9a84c]" />
+                      <h3 className="text-white text-base font-extrabold">
+                        أعجبتك النتيجة؟ النسخة الكاملة تعطيك أكثر بكثير
+                      </h3>
+                    </div>
                     <p className="text-white/50 text-sm leading-relaxed mb-4 max-w-sm mx-auto">
-                      وصف عقاري كامل · هاشتاجات احترافية · محتوى لكل منصة · منشور واتساب جاهز · تصاميم احترافية
+                      وصف عقاري كامل · هاشتاجات احترافية · محتوى لكل منصة · تصاميم جاهزة · نشر فوري
                     </p>
                     <div className="flex flex-wrap justify-center gap-2 mb-5">
-                      {["📝 وصف تسويقي كامل", "# هاشتاجات ذكية", "📱 منشور إنستغرام", "💬 رسالة واتساب", "💼 منشور لينكدإن", "🎨 تصاميم جاهزة"].map((feat) => (
+                      {["📝 وصف تسويقي كامل", "# هاشتاجات ذكية", "📱 6 منصات", "🎨 تصاميم جاهزة", "💬 واتساب جاهز", "📊 تحليلات"].map((feat) => (
                         <span key={feat} className="bg-[rgba(201,168,76,0.12)] border border-[rgba(201,168,76,0.3)] text-[#c9a84c] text-xs font-semibold px-3 py-1.5 rounded-full">
                           {feat}
                         </span>
                       ))}
                     </div>
                     <a
-                      href={MAIN_CTA_URL}
+                      href={trackedUrl("/", "upsell-banner")}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="inline-flex items-center gap-2 bg-[#c9a84c] text-[#0f1117] font-black text-sm px-7 py-3 rounded-[14px] no-underline transition-all hover:-translate-y-0.5 hover:shadow-[0_8px_28px_rgba(201,168,76,0.45)] shadow-[0_4px_20px_rgba(201,168,76,0.35)]"
+                      onClick={() => trackEvent("click_upsell_banner", { city: formData.city })}
                     >
                       جرّب النسخة الكاملة مجاناً
                       <ArrowLeft className="w-4 h-4" />
                     </a>
                   </motion.div>
 
-                  {/* Share + Try Again */}
+                  {/* Share + Reset */}
                   <div className="flex items-center justify-center gap-3 mt-5 pt-5 border-t border-[#e2e4ed]">
                     <span className="text-xs text-[#3a3d4a] font-semibold">أعجبتك الأداة؟ شارك زملاءك:</span>
                     <a
                       href={`https://wa.me/?text=${encodeURIComponent(
-                        `🏠 جرّبت أداة مجانية تكتب عناوين تسويقية لأي عقار في 7 ثوانٍ!\n\nجرّبها مجاناً 👇\n${MAIN_CTA_URL}`
+                        `🏠 جرّبت أداة مجانية تكتب عناوين تسويقية لأي عقار في 7 ثوانٍ!\n\nجرّبها مجاناً 👇\n${MAIN_CTA_BASE}`
                       )}`}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="inline-flex items-center gap-1.5 bg-[#25D366] text-white text-xs font-bold px-4 py-2.5 rounded-xl no-underline hover:opacity-90 transition-opacity"
+                      onClick={() => trackEvent("share_whatsapp", { city: formData.city })}
                     >
                       <MessageCircle className="w-4 h-4" />
                       شارك عبر واتساب
@@ -803,7 +904,7 @@ export default function SadaLandingPage() {
             className="text-center mb-8"
           >
             <h2 className="text-xl sm:text-2xl font-black text-[#0f1117] mb-2">
-              الفرق <span className="text-red-500">بدون</span> صدى العقار وبعده
+              الفرق واضح — <span className="text-red-500">بدون</span> وبعد
             </h2>
           </motion.div>
 
@@ -812,8 +913,8 @@ export default function SadaLandingPage() {
               <thead>
                 <tr className="border-b-2 border-[#e2e4ed]">
                   <th className="py-3 px-4 text-right text-[#3a3d4a] font-semibold">المهمة</th>
-                  <th className="py-3 px-4 text-center text-red-500 font-semibold">قبل 😩</th>
-                  <th className="py-3 px-4 text-center text-[#0D7C66] font-semibold">بعد 🚀</th>
+                  <th className="py-3 px-4 text-center text-red-500 font-semibold">بدون 😩</th>
+                  <th className="py-3 px-4 text-center text-[#0D7C66] font-semibold">مع صدى العقار 🚀</th>
                 </tr>
               </thead>
               <tbody>
@@ -887,9 +988,9 @@ export default function SadaLandingPage() {
         <div className="max-w-4xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
           {[
             { icon: <Users className="w-6 h-6 text-[#c9a84c] mx-auto mb-2" />, num: "2,800+", label: "مستخدم نشط" },
-            { icon: <Building2 className="w-6 h-6 text-[#c9a84c] mx-auto mb-2" />, num: "11", label: "دولة عربية" },
+            { icon: <Globe className="w-6 h-6 text-[#c9a84c] mx-auto mb-2" />, num: String(countryCount), label: "دولة عربية" },
+            { icon: <Building2 className="w-6 h-6 text-[#c9a84c] mx-auto mb-2" />, num: String(totalCities), label: "مدينة مدعومة" },
             { icon: <Zap className="w-6 h-6 text-[#c9a84c] mx-auto mb-2" />, num: "7 ثوانٍ", label: "للنتيجة" },
-            { icon: <BarChart3 className="w-6 h-6 text-[#c9a84c] mx-auto mb-2" />, num: "4", label: "منصات مدعومة" },
           ].map((stat, idx) => (
             <motion.div
               key={idx}
@@ -917,17 +1018,18 @@ export default function SadaLandingPage() {
           className="max-w-lg mx-auto relative z-10"
         >
           <h2 className="text-2xl sm:text-3xl font-black text-white mb-3">
-            جاهز لتسويق عقاري <span className="text-[#c9a84c]">أسرع وأقنع</span>؟
+            لا تدع عقارك يضيع بين <span className="text-[#c9a84c]">الآلاف</span>
           </h2>
           <p className="text-white/50 text-sm leading-relaxed mb-6">
             الأداة المجانية تعطيك عناوين فقط. النسخة الكاملة تعطيك وصفاً كاملاً، هاشتاجات، محتوى لكل منصة، وتصاميم احترافية — كل ذلك في 7 ثوانٍ.
           </p>
 
           <a
-            href={MAIN_CTA_URL}
+            href={trackedUrl("/", "final-cta")}
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex items-center gap-2 bg-[#c9a84c] text-[#0f1117] font-black text-base px-10 py-4 rounded-[14px] no-underline transition-all hover:-translate-y-1 hover:shadow-[0_12px_35px_rgba(201,168,76,0.5)] shadow-[0_4px_20px_rgba(201,168,76,0.35)] mb-4"
+            onClick={() => trackEvent("click_final_cta")}
           >
             <TrendingUp className="w-5 h-5" />
             جرّب صدى العقار الكامل — مجاناً
@@ -942,22 +1044,34 @@ export default function SadaLandingPage() {
       {/* ── FOOTER ── */}
       <footer className="mt-auto text-center py-5 px-5 text-xs text-[#aaa] border-t border-[#e2e4ed] bg-white">
         أداة مجانية من{" "}
-        <a href={MAIN_CTA_URL} target="_blank" rel="noopener noreferrer" className="text-[#c9a84c] no-underline">
+        <a
+          href={trackedUrl("/", "footer")}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-[#c9a84c] no-underline"
+          onClick={() => trackEvent("click_footer")}
+        >
           صدى العقار
         </a>{" "}
         — مساعد التسويق العقاري للسوق العربي |{" "}
-        <a href={`${MAIN_CTA_URL}/privacy`} target="_blank" rel="noopener noreferrer" className="text-[#aaa] no-underline hover:text-[#c9a84c]">
+        <a
+          href={trackedUrl("/privacy", "footer-privacy")}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-[#aaa] no-underline hover:text-[#c9a84c]"
+        >
           سياسة الخصوصية
         </a>
       </footer>
 
-      {/* ── FLOATING WHATSAPP BUTTON ── */}
+      {/* ── FLOATING WHATSAPP ── */}
       <a
         href="https://wa.me/213696212465?text=مرحباً، أريد الاستفسار عن صدى العقار"
         target="_blank"
         rel="noopener noreferrer"
         className="fixed bottom-6 left-6 z-50 w-14 h-14 bg-[#25D366] rounded-full flex items-center justify-center shadow-[0_4px_20px_rgba(37,211,102,0.4)] hover:scale-110 transition-transform"
         title="تواصل عبر واتساب"
+        onClick={() => trackEvent("click_whatsapp_float")}
       >
         <Phone className="w-6 h-6 text-white" />
       </a>
