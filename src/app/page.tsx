@@ -156,30 +156,44 @@ function useUserCounter() {
 
 // ─── Countdown Timer ───────────────────────────────────────
 function useCountdown() {
-  const [timeLeft, setTimeLeft] = useState({ hours: 23, minutes: 59, seconds: 59 });
+  // 10-day countdown stored in localStorage so it persists across visits
+  const STORAGE_KEY = "sada_countdown_end";
+  const TEN_DAYS_MS = 10 * 24 * 60 * 60 * 1000;
+
+  const getTarget = (): number => {
+    if (typeof window === "undefined") return Date.now() + TEN_DAYS_MS;
+    const stored = localStorage.getItem(STORAGE_KEY);
+    if (stored) {
+      const end = parseInt(stored, 10);
+      if (end > Date.now()) return end;
+    }
+    const newEnd = Date.now() + TEN_DAYS_MS;
+    localStorage.setItem(STORAGE_KEY, String(newEnd));
+    return newEnd;
+  };
+
+  const calcRemaining = (target: number) => {
+    const diff = Math.max(0, target - Date.now());
+    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+    const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+    const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+    return { days, hours, minutes, seconds };
+  };
+
+  const [timeLeft, setTimeLeft] = useState(() => calcRemaining(getTarget()));
 
   useEffect(() => {
+    const target = getTarget();
     const timer = setInterval(() => {
-      setTimeLeft((prev) => {
-        let { hours, minutes, seconds } = prev;
-        seconds--;
-        if (seconds < 0) {
-          seconds = 59;
-          minutes--;
-        }
-        if (minutes < 0) {
-          minutes = 59;
-          hours--;
-        }
-        if (hours < 0) {
-          hours = 23;
-          minutes = 59;
-          seconds = 59;
-        }
-        return { hours, minutes, seconds };
-      });
+      const remaining = calcRemaining(target);
+      setTimeLeft(remaining);
+      if (remaining.days === 0 && remaining.hours === 0 && remaining.minutes === 0 && remaining.seconds === 0) {
+        clearInterval(timer);
+      }
     }, 1000);
     return () => clearInterval(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return timeLeft;
@@ -370,7 +384,12 @@ export default function SadaLandingPage() {
           <div className="inline-flex items-center gap-2 bg-[#c9a84c]/10 border border-[#c9a84c]/30 text-[#c9a84c] rounded-full px-4 py-1.5 text-xs font-bold mb-5">
             <Zap className="w-3.5 h-3.5" />
             <span>عرض لفترة محدودة — مجاناً بالكامل</span>
-            <div className="flex gap-1 mr-1">
+            <div className="flex gap-1 mr-1 items-center">
+              <span className="bg-[#c9a84c] text-[#0f1117] px-2 py-0.5 rounded text-[10px] font-black">
+                {countdown.days}
+              </span>
+              <span className="text-[#c9a84c] text-[9px]">يوم</span>
+              <span className="text-[#c9a84c]">:</span>
               <span className="bg-[#c9a84c] text-[#0f1117] px-1.5 py-0.5 rounded text-[10px] font-black">
                 {String(countdown.hours).padStart(2, "0")}
               </span>
@@ -1039,7 +1058,7 @@ export default function SadaLandingPage() {
 
       {/* ── FLOATING WHATSAPP BUTTON ── */}
       <a
-        href="https://wa.me/966500000000?text=مرحباً، أريد الاستفسار عن صدى العقار"
+        href="https://wa.me/213696212465?text=مرحباً، أريد الاستفسار عن صدى العقار"
         target="_blank"
         rel="noopener noreferrer"
         className="fixed bottom-6 left-6 z-50 w-14 h-14 bg-[#25D366] rounded-full flex items-center justify-center shadow-[0_4px_20px_rgba(37,211,102,0.4)] hover:scale-110 transition-transform"
