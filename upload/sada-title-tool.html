@@ -1,0 +1,851 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>مولّد العناوين العقارية — صدى العقار</title>
+<meta name="description" content="أنشئ عنواناً تسويقياً احترافياً لعقارك في ثوانٍ — مجاناً بالكامل">
+<meta property="og:title" content="مولّد العناوين العقارية المجاني — صدى العقار">
+<meta property="og:description" content="أدخل بيانات عقارك واحصل على عنوان تسويقي يجذب المشترين — في أقل من 10 ثوانٍ">
+<meta property="og:type" content="website">
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&display=swap');
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --ink:       #0f1117;
+    --ink-light: #3a3d4a;
+    --mist:      #f5f6fa;
+    --border:    #e2e4ed;
+    --gold:      #c9a84c;
+    --gold-soft: #f5edda;
+    --gold-glow: rgba(201,168,76,0.18);
+    --white:     #ffffff;
+    --radius:    14px;
+    --shadow:    0 4px 24px rgba(15,17,23,0.08);
+    --shadow-lg: 0 12px 48px rgba(15,17,23,0.14);
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: 'Cairo', sans-serif;
+    background: var(--mist);
+    color: var(--ink);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* ── HEADER ── */
+  header {
+    background: var(--ink);
+    padding: 18px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    text-decoration: none;
+  }
+  .logo-dot {
+    width: 32px; height: 32px;
+    background: var(--gold);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px;
+    flex-shrink: 0;
+  }
+  .logo-text { color: var(--white); font-weight: 700; font-size: 1.05rem; }
+  .logo-sub  { color: rgba(255,255,255,0.45); font-size: 0.72rem; font-weight: 300; }
+
+  .header-cta {
+    background: var(--gold);
+    color: var(--ink);
+    font-family: 'Cairo', sans-serif;
+    font-weight: 700;
+    font-size: 0.82rem;
+    padding: 8px 16px;
+    border-radius: 8px;
+    text-decoration: none;
+    white-space: nowrap;
+    transition: opacity .2s;
+  }
+  .header-cta:hover { opacity: .85; }
+
+  /* ── HERO ── */
+  .hero {
+    background: var(--ink);
+    padding: 60px 24px 80px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+  .hero::before {
+    content: '';
+    position: absolute;
+    top: -60px; left: 50%; transform: translateX(-50%);
+    width: 500px; height: 500px;
+    background: radial-gradient(circle, var(--gold-glow) 0%, transparent 70%);
+    pointer-events: none;
+  }
+  .hero-badge {
+    display: inline-block;
+    background: var(--gold-soft);
+    color: var(--gold);
+    border: 1px solid var(--gold);
+    border-radius: 100px;
+    font-size: 0.78rem;
+    font-weight: 700;
+    padding: 5px 16px;
+    margin-bottom: 22px;
+    letter-spacing: .03em;
+  }
+  .hero h1 {
+    color: var(--white);
+    font-size: clamp(1.7rem, 5vw, 2.6rem);
+    font-weight: 900;
+    line-height: 1.35;
+    max-width: 640px;
+    margin: 0 auto 16px;
+  }
+  .hero h1 span { color: var(--gold); }
+  .hero p {
+    color: rgba(255,255,255,0.55);
+    font-size: 1rem;
+    font-weight: 400;
+    max-width: 480px;
+    margin: 0 auto;
+    line-height: 1.7;
+  }
+
+  /* ── CARD ── */
+  .card-wrap {
+    max-width: 680px;
+    margin: -40px auto 0;
+    padding: 0 20px 60px;
+    position: relative;
+    z-index: 10;
+  }
+  .card {
+    background: var(--white);
+    border-radius: 20px;
+    box-shadow: var(--shadow-lg);
+    overflow: hidden;
+  }
+  .card-header {
+    background: linear-gradient(135deg, var(--gold-soft), #fff8e8);
+    border-bottom: 1px solid #edddb0;
+    padding: 20px 28px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .card-header-icon {
+    width: 40px; height: 40px;
+    background: var(--gold);
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px;
+    flex-shrink: 0;
+  }
+  .card-header-text h2 { font-size: 1rem; font-weight: 700; color: var(--ink); }
+  .card-header-text p  { font-size: 0.78rem; color: var(--ink-light); margin-top: 2px; }
+
+  .card-body { padding: 28px; }
+
+  /* ── FORM ── */
+  .fields { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  @media(max-width:520px){ .fields { grid-template-columns: 1fr; } }
+
+  .field { display: flex; flex-direction: column; gap: 6px; }
+  .field.full { grid-column: 1 / -1; }
+
+  label {
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: var(--ink-light);
+    display: flex; align-items: center; gap: 6px;
+  }
+  label .req { color: var(--gold); }
+
+  select, input[type="text"] {
+    font-family: 'Cairo', sans-serif;
+    font-size: 0.92rem;
+    color: var(--ink);
+    background: var(--mist);
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius);
+    padding: 11px 14px;
+    width: 100%;
+    outline: none;
+    transition: border-color .2s, box-shadow .2s;
+    appearance: none;
+    -webkit-appearance: none;
+    cursor: pointer;
+  }
+  select { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%233a3d4a' stroke-width='2.5'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: left 14px center; padding-left: 36px; }
+  select:focus, input:focus {
+    border-color: var(--gold);
+    box-shadow: 0 0 0 3px var(--gold-glow);
+    background: var(--white);
+  }
+
+  .step-divider {
+    display: flex; align-items: center; gap: 12px;
+    margin: 22px 0 18px;
+    color: var(--ink-light);
+    font-size: 0.78rem;
+    font-weight: 600;
+  }
+  .step-divider::before, .step-divider::after {
+    content: ''; flex: 1;
+    height: 1px; background: var(--border);
+  }
+
+  /* ── GENERATE BUTTON ── */
+  .btn-generate {
+    width: 100%;
+    margin-top: 24px;
+    background: var(--gold);
+    color: var(--ink);
+    border: none;
+    font-family: 'Cairo', sans-serif;
+    font-size: 1rem;
+    font-weight: 900;
+    padding: 16px;
+    border-radius: var(--radius);
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center; gap: 10px;
+    transition: transform .15s, box-shadow .15s, opacity .2s;
+    box-shadow: 0 4px 20px rgba(201,168,76,0.35);
+  }
+  .btn-generate:hover  { transform: translateY(-2px); box-shadow: 0 8px 28px rgba(201,168,76,0.45); }
+  .btn-generate:active { transform: translateY(0); }
+  .btn-generate:disabled { opacity: .6; cursor: not-allowed; transform: none; }
+
+  /* ── LOADING ── */
+  .loading-wrap {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    padding: 40px 20px;
+    gap: 16px;
+  }
+  .loading-wrap.show { display: flex; }
+  .spinner {
+    width: 44px; height: 44px;
+    border: 3px solid var(--border);
+    border-top-color: var(--gold);
+    border-radius: 50%;
+    animation: spin .7s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .loading-text { color: var(--ink-light); font-size: 0.9rem; font-weight: 600; }
+  .loading-sub  { color: #aaa; font-size: 0.78rem; }
+
+  /* ── RESULT ── */
+  .result-wrap { display: none; padding: 0 28px 28px; }
+  .result-wrap.show { display: block; }
+
+  .result-label {
+    font-size: 0.75rem; font-weight: 700;
+    color: var(--gold); letter-spacing: .06em;
+    text-transform: uppercase;
+    margin-bottom: 14px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .result-label::after { content: ''; flex:1; height:1px; background: #edddb0; }
+
+  .title-cards { display: flex; flex-direction: column; gap: 12px; }
+
+  .title-card {
+    background: var(--mist);
+    border: 1.5px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px 18px;
+    position: relative;
+    transition: border-color .2s, box-shadow .2s;
+    cursor: pointer;
+  }
+  .title-card:hover {
+    border-color: var(--gold);
+    box-shadow: 0 0 0 3px var(--gold-glow);
+  }
+  .title-card.copied {
+    border-color: #22c55e;
+    box-shadow: 0 0 0 3px rgba(34,197,94,.15);
+  }
+
+  .platform-tag {
+    display: inline-block;
+    font-size: 0.68rem; font-weight: 700;
+    background: var(--ink);
+    color: var(--white);
+    border-radius: 6px;
+    padding: 3px 10px;
+    margin-bottom: 10px;
+    letter-spacing: .04em;
+  }
+
+  .title-text {
+    font-size: 1rem; font-weight: 700;
+    color: var(--ink);
+    line-height: 1.55;
+  }
+
+  .copy-hint {
+    position: absolute;
+    left: 14px; top: 14px;
+    font-size: 0.7rem;
+    color: #aaa;
+    display: flex; align-items: center; gap: 4px;
+  }
+  .copy-hint svg { width:13px; height:13px; }
+
+  .copied-badge {
+    display: none;
+    position: absolute;
+    left: 14px; top: 14px;
+    font-size: 0.7rem;
+    color: #22c55e;
+    font-weight: 700;
+  }
+  .title-card.copied .copy-hint  { display: none; }
+  .title-card.copied .copied-badge { display: block; }
+
+  /* ── UPGRADE BANNER ── */
+  .upgrade-banner {
+    margin: 24px 0 0;
+    background: linear-gradient(135deg, var(--ink) 60%, #1e2235);
+    border-radius: 16px;
+    padding: 24px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+  .upgrade-banner::before {
+    content: '';
+    position: absolute;
+    top: -30px; right: -30px;
+    width: 120px; height: 120px;
+    background: radial-gradient(circle, var(--gold-glow) 0%, transparent 70%);
+  }
+  .upgrade-banner h3 {
+    color: var(--white);
+    font-size: 1rem;
+    font-weight: 800;
+    margin-bottom: 8px;
+  }
+  .upgrade-banner p {
+    color: rgba(255,255,255,0.5);
+    font-size: 0.82rem;
+    line-height: 1.6;
+    margin-bottom: 18px;
+    max-width: 380px;
+    margin-left: auto; margin-right: auto;
+  }
+  .upgrade-features {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 8px;
+    margin-bottom: 20px;
+  }
+  .upgrade-feat {
+    background: rgba(201,168,76,0.12);
+    border: 1px solid rgba(201,168,76,0.3);
+    color: var(--gold);
+    font-size: 0.75rem;
+    font-weight: 600;
+    padding: 5px 12px;
+    border-radius: 100px;
+  }
+  .btn-upgrade {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--gold);
+    color: var(--ink);
+    font-family: 'Cairo', sans-serif;
+    font-size: 0.92rem;
+    font-weight: 900;
+    padding: 13px 28px;
+    border-radius: var(--radius);
+    text-decoration: none;
+    transition: transform .15s, box-shadow .15s;
+    box-shadow: 0 4px 20px rgba(201,168,76,0.35);
+  }
+  .btn-upgrade:hover { transform: translateY(-2px); box-shadow: 0 8px 28px rgba(201,168,76,0.45); }
+
+  /* ── TRY AGAIN ── */
+  .btn-again {
+    width: 100%;
+    margin-top: 14px;
+    background: transparent;
+    border: 1.5px solid var(--border);
+    font-family: 'Cairo', sans-serif;
+    font-size: 0.88rem;
+    font-weight: 700;
+    color: var(--ink-light);
+    padding: 11px;
+    border-radius: var(--radius);
+    cursor: pointer;
+    transition: border-color .2s, color .2s;
+  }
+  .btn-again:hover { border-color: var(--gold); color: var(--gold); }
+
+  /* ── SHARE STRIP ── */
+  .share-strip {
+    display: none;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    margin-top: 18px;
+    padding-top: 18px;
+    border-top: 1px solid var(--border);
+  }
+  .share-strip.show { display: flex; }
+  .share-label { font-size: 0.8rem; color: var(--ink-light); font-weight: 600; }
+  .btn-share {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: #25D366;
+    color: #fff;
+    border: none;
+    font-family: 'Cairo', sans-serif;
+    font-size: 0.82rem;
+    font-weight: 700;
+    padding: 9px 16px;
+    border-radius: 10px;
+    cursor: pointer;
+    text-decoration: none;
+    transition: opacity .2s;
+  }
+  .btn-share:hover { opacity: .88; }
+
+  /* ── SOCIAL PROOF ── */
+  .proof-strip {
+    max-width: 680px;
+    margin: 0 auto 40px;
+    padding: 0 20px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    justify-content: center;
+  }
+  .proof-card {
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 14px 18px;
+    flex: 1; min-width: 200px; max-width: 300px;
+    display: flex; align-items: flex-start; gap: 10px;
+  }
+  .proof-icon { font-size: 22px; flex-shrink: 0; margin-top: 2px; }
+  .proof-text { font-size: 0.8rem; color: var(--ink-light); line-height: 1.55; }
+  .proof-text strong { color: var(--ink); display: block; margin-bottom: 2px; }
+
+  /* ── FOOTER ── */
+  footer {
+    margin-top: auto;
+    text-align: center;
+    padding: 24px;
+    font-size: 0.75rem;
+    color: #aaa;
+    border-top: 1px solid var(--border);
+  }
+  footer a { color: var(--gold); text-decoration: none; }
+
+  /* ── ERROR ── */
+  .error-msg {
+    display: none;
+    background: #fff2f2;
+    border: 1px solid #fca5a5;
+    color: #b91c1c;
+    border-radius: 10px;
+    padding: 12px 16px;
+    font-size: 0.85rem;
+    margin-top: 16px;
+    text-align: center;
+  }
+  .error-msg.show { display: block; }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header>
+  <a class="logo" href="https://sada-elaqar.vercel.app" target="_blank">
+    <div class="logo-dot">🏠</div>
+    <div>
+      <div class="logo-text">صدى العقار</div>
+      <div class="logo-sub">مساعد التسويق العقاري</div>
+    </div>
+  </a>
+  <a class="header-cta" href="https://sada-elaqar.vercel.app" target="_blank">جرّب النسخة الكاملة ←</a>
+</header>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-badge">🎁 مجاناً بالكامل — بدون تسجيل</div>
+  <h1>أنشئ <span>عنواناً تسويقياً</span><br>لعقارك في 7 ثوانٍ</h1>
+  <p>أدخل نوع العقار والمدينة — وسيكتب الذكاء الاصطناعي لك عناوين جاهزة للنشر</p>
+</section>
+
+<!-- MAIN CARD -->
+<div class="card-wrap">
+  <div class="card">
+    <div class="card-header">
+      <div class="card-header-icon">✍️</div>
+      <div class="card-header-text">
+        <h2>بيانات العقار</h2>
+        <p>خطوتان فقط — والعنوان جاهز</p>
+      </div>
+    </div>
+
+    <div class="card-body" id="formSection">
+      <div class="fields">
+        <div class="field">
+          <label>نوع العقار <span class="req">*</span></label>
+          <select id="propType">
+            <option value="">— اختر —</option>
+            <optgroup label="سكني">
+              <option value="شقة">شقة</option>
+              <option value="فيلا">فيلا</option>
+              <option value="استوديو">استوديو</option>
+              <option value="بنتهاوس">بنتهاوس</option>
+              <option value="دوبلكس">دوبلكس</option>
+              <option value="شاليه">شاليه</option>
+              <option value="عمارة سكنية">عمارة سكنية</option>
+            </optgroup>
+            <optgroup label="تجاري">
+              <option value="محل تجاري">محل تجاري</option>
+              <option value="مكتب تجاري">مكتب تجاري</option>
+            </optgroup>
+            <optgroup label="أراضي">
+              <option value="أرض سكنية">أرض سكنية</option>
+              <option value="أرض تجارية">أرض تجارية</option>
+            </optgroup>
+          </select>
+        </div>
+
+        <div class="field">
+          <label>الغرض <span class="req">*</span></label>
+          <select id="purpose">
+            <option value="">— اختر —</option>
+            <option value="للبيع">للبيع</option>
+            <option value="للإيجار">للإيجار</option>
+            <option value="للاستثمار">للاستثمار</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label>المدينة <span class="req">*</span></label>
+          <select id="city">
+            <option value="">— اختر —</option>
+            <optgroup label="السعودية">
+              <option>الرياض</option><option>جدة</option><option>مكة المكرمة</option>
+              <option>الدمام</option><option>المدينة المنورة</option><option>الخبر</option>
+            </optgroup>
+            <optgroup label="الإمارات">
+              <option>دبي</option><option>أبوظبي</option><option>الشارقة</option>
+              <option>عجمان</option><option>رأس الخيمة</option>
+            </optgroup>
+            <optgroup label="الخليج">
+              <option>الدوحة</option><option>الكويت</option><option>مسقط</option><option>المنامة</option>
+            </optgroup>
+            <optgroup label="أخرى">
+              <option>القاهرة</option><option>عمّان</option><option>بيروت</option><option>الدار البيضاء</option>
+            </optgroup>
+          </select>
+        </div>
+
+        <div class="field">
+          <label>الحي / المنطقة</label>
+          <input type="text" id="area" placeholder="مثال: حي النرجس، وسط المدينة">
+        </div>
+      </div>
+
+      <div class="step-divider">تفاصيل إضافية (اختياري — تحسّن النتيجة)</div>
+
+      <div class="fields">
+        <div class="field">
+          <label>المساحة (م²)</label>
+          <input type="text" id="space" placeholder="مثال: 150">
+        </div>
+        <div class="field">
+          <label>عدد الغرف</label>
+          <select id="rooms">
+            <option value="">—</option>
+            <option>استوديو</option>
+            <option>غرفة واحدة</option>
+            <option>غرفتان</option>
+            <option>3 غرف</option>
+            <option>4 غرف</option>
+            <option>5 غرف وأكثر</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>ميزة بارزة</label>
+          <select id="feature">
+            <option value="">— اختر إن وجد —</option>
+            <option>إطلالة بحرية</option>
+            <option>إطلالة على الحديقة</option>
+            <option>موقع مميز</option>
+            <option>تشطيب فاخر</option>
+            <option>قريب من المسجد</option>
+            <option>قريب من المدارس</option>
+            <option>مسبح خاص</option>
+            <option>فرصة استثمارية</option>
+            <option>تسليم فوري</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>السعر</label>
+          <input type="text" id="price" placeholder="مثال: 850,000 ريال">
+        </div>
+      </div>
+
+      <div class="error-msg" id="errorMsg">⚠️ يرجى اختيار نوع العقار والغرض والمدينة على الأقل</div>
+
+      <button class="btn-generate" id="generateBtn" onclick="generateTitles()">
+        <span>⚡</span>
+        <span>أنشئ العناوين التسويقية الآن</span>
+      </button>
+    </div>
+
+    <!-- LOADING -->
+    <div class="loading-wrap" id="loadingWrap">
+      <div class="spinner"></div>
+      <div class="loading-text">صدى العقار يكتب لك...</div>
+      <div class="loading-sub">يحلّل البيانات ويصيغ أفضل العناوين</div>
+    </div>
+
+    <!-- RESULT -->
+    <div class="result-wrap" id="resultWrap">
+      <div class="result-label">العناوين التسويقية الجاهزة</div>
+      <div class="title-cards" id="titleCards"></div>
+
+      <!-- UPGRADE BANNER -->
+      <div class="upgrade-banner">
+        <h3>🚀 هذا مجرد البداية — النسخة الكاملة تفعل أكثر</h3>
+        <p>وصف عقاري كامل · هاشتاجات احترافية · محتوى لكل منصة · منشور واتساب جاهز</p>
+        <div class="upgrade-features">
+          <span class="upgrade-feat">📝 وصف تسويقي كامل</span>
+          <span class="upgrade-feat"># هاشتاجات ذكية</span>
+          <span class="upgrade-feat">📱 منشور إنستغرام</span>
+          <span class="upgrade-feat">💬 رسالة واتساب</span>
+          <span class="upgrade-feat">💼 منشور لينكدإن</span>
+        </div>
+        <a class="btn-upgrade" href="https://sada-elaqar.vercel.app#demo" target="_blank">
+          <span>جرّب النسخة الكاملة مجاناً</span>
+          <span>←</span>
+        </a>
+      </div>
+
+      <!-- SHARE -->
+      <div class="share-strip show">
+        <span class="share-label">أعجبتك الأداة؟ شارك زملاءك:</span>
+        <a class="btn-share" id="whatsappShare" href="#" target="_blank">
+          <svg viewBox="0 0 24 24" width="15" height="15" fill="white"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+          شارك عبر واتساب
+        </a>
+      </div>
+
+      <button class="btn-again" onclick="resetForm()">← أنشئ عناوين لعقار آخر</button>
+    </div>
+  </div>
+
+  <!-- PROOF CARDS -->
+  <div class="proof-strip" style="margin-top:24px;">
+    <div class="proof-card">
+      <div class="proof-icon">⚡</div>
+      <div class="proof-text">
+        <strong>7 ثوانٍ بدلاً من ساعة</strong>
+        وكلاء عقاريون يوفّرون ساعات يومياً باستخدام صدى العقار
+      </div>
+    </div>
+    <div class="proof-card">
+      <div class="proof-icon">🌍</div>
+      <div class="proof-text">
+        <strong>بلهجة بلدك تماماً</strong>
+        محتوى مخصّص للسعودية والإمارات وقطر والكويت وكل دول الخليج
+      </div>
+    </div>
+    <div class="proof-card">
+      <div class="proof-icon">🎯</div>
+      <div class="proof-text">
+        <strong>لكل منصة أسلوبها</strong>
+        واتساب، إنستغرام، تويتر، لينكدإن — كل محتوى مضبوط لجمهوره
+      </div>
+    </div>
+  </div>
+</div>
+
+<footer>
+  أداة مجانية من <a href="https://sada-elaqar.vercel.app" target="_blank">صدى العقار</a> — مساعد التسويق العقاري للسوق العربي
+</footer>
+
+<script>
+const ANTHROPIC_API = "https://api.anthropic.com/v1/messages";
+
+async function generateTitles() {
+  const propType = document.getElementById('propType').value;
+  const purpose  = document.getElementById('purpose').value;
+  const city     = document.getElementById('city').value;
+  const area     = document.getElementById('area').value;
+  const space    = document.getElementById('space').value;
+  const rooms    = document.getElementById('rooms').value;
+  const feature  = document.getElementById('feature').value;
+  const price    = document.getElementById('price').value;
+
+  const errorMsg = document.getElementById('errorMsg');
+  if (!propType || !purpose || !city) {
+    errorMsg.classList.add('show');
+    return;
+  }
+  errorMsg.classList.remove('show');
+
+  // Build prompt
+  const extras = [
+    space   ? `المساحة: ${space} م²` : '',
+    rooms   ? `عدد الغرف: ${rooms}` : '',
+    feature ? `ميزة بارزة: ${feature}` : '',
+    price   ? `السعر: ${price}` : '',
+    area    ? `الحي/المنطقة: ${area}` : '',
+  ].filter(Boolean).join('، ');
+
+  const prompt = `أنت خبير في التسويق العقاري للسوق العربي والخليجي.
+
+بيانات العقار:
+- النوع: ${propType}
+- الغرض: ${purpose}
+- المدينة: ${city}
+${extras ? `- تفاصيل إضافية: ${extras}` : ''}
+
+المطلوب: اكتب بالضبط 4 عناوين تسويقية جذابة وقوية لهذا العقار، كل عنوان مخصص لمنصة مختلفة.
+
+أجب فقط بهذا الـ JSON بدون أي كلام إضافي أو backticks:
+{
+  "titles": [
+    {"platform": "واتساب", "title": "..."},
+    {"platform": "إنستغرام", "title": "..."},
+    {"platform": "تويتر / X", "title": "..."},
+    {"platform": "لينكدإن", "title": "..."}
+  ]
+}
+
+قواعد كل عنوان:
+- واتساب: تفصيلي وودود، يذكر المميزات والموقع، ينتهي بدعوة للتواصل (لا يتجاوز 3 أسطر)
+- إنستغرام: جذاب ومشاعري، يستخدم نقاط وإيموجي مناسبة، قصير وقوي
+- تويتر/X: مباشر وصادم، لا يتجاوز 200 حرف، يثير الفضول
+- لينكدإن: احترافي واستثماري، يركز على العائد والقيمة، لغة أعمال
+
+اكتب بلهجة عربية فصيحة مناسبة لمدينة ${city}. لا تستخدم كلمات إنجليزية.`;
+
+  // Show loading
+  document.getElementById('formSection').style.display = 'none';
+  document.getElementById('loadingWrap').classList.add('show');
+  document.getElementById('resultWrap').classList.remove('show');
+  document.getElementById('generateBtn') && (document.getElementById('generateBtn').disabled = true);
+
+  try {
+    const res = await fetch(ANTHROPIC_API, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-6',
+        max_tokens: 1000,
+        messages: [{ role: 'user', content: prompt }]
+      })
+    });
+
+    const data = await res.json();
+    const text = data.content?.map(i => i.text || '').join('') || '';
+
+    let parsed;
+    try {
+      const clean = text.replace(/```json|```/g, '').trim();
+      parsed = JSON.parse(clean);
+    } catch {
+      throw new Error('تعذّر تحليل الاستجابة');
+    }
+
+    renderResults(parsed.titles, propType, purpose, city);
+  } catch (err) {
+    document.getElementById('formSection').style.display = 'block';
+    document.getElementById('loadingWrap').classList.remove('show');
+    const errEl = document.getElementById('errorMsg');
+    errEl.textContent = '⚠️ حدث خطأ أثناء التوليد — تحقق من اتصالك وحاول مجدداً';
+    errEl.classList.add('show');
+  }
+}
+
+function renderResults(titles, propType, purpose, city) {
+  document.getElementById('loadingWrap').classList.remove('show');
+
+  const container = document.getElementById('titleCards');
+  container.innerHTML = '';
+
+  const platformColors = {
+    'واتساب':    '#25D366',
+    'إنستغرام':  '#E1306C',
+    'تويتر / X': '#000000',
+    'لينكدإن':   '#0A66C2',
+  };
+
+  titles.forEach(({ platform, title }) => {
+    const color = platformColors[platform] || '#333';
+    const card = document.createElement('div');
+    card.className = 'title-card';
+    card.innerHTML = `
+      <span class="platform-tag" style="background:${color}">${platform}</span>
+      <div class="title-text">${title}</div>
+      <span class="copy-hint">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+        انقر للنسخ
+      </span>
+      <span class="copied-badge">✓ تم النسخ</span>
+    `;
+    card.onclick = () => copyTitle(card, title);
+    container.appendChild(card);
+  });
+
+  // WhatsApp share
+  const shareText = `🏠 جرّبت أداة مجانية تكتب عناوين تسويقية لأي عقار في 7 ثوانٍ!\n\nمثال لـ${propType} ${purpose} في ${city}:\n\n"${titles[0]?.title}"\n\nجرّبها مجاناً بدون تسجيل 👇`;
+  const waLink = `https://wa.me/?text=${encodeURIComponent(shareText + '\n\n' + window.location.href)}`;
+  document.getElementById('whatsappShare').href = waLink;
+
+  document.getElementById('resultWrap').classList.add('show');
+}
+
+function copyTitle(card, text) {
+  navigator.clipboard.writeText(text).then(() => {
+    card.classList.add('copied');
+    setTimeout(() => card.classList.remove('copied'), 2200);
+  });
+}
+
+function resetForm() {
+  document.getElementById('resultWrap').classList.remove('show');
+  document.getElementById('formSection').style.display = 'block';
+  document.getElementById('generateBtn').disabled = false;
+  document.getElementById('propType').value = '';
+  document.getElementById('purpose').value  = '';
+  document.getElementById('city').value     = '';
+  document.getElementById('area').value     = '';
+  document.getElementById('space').value    = '';
+  document.getElementById('rooms').value    = '';
+  document.getElementById('feature').value  = '';
+  document.getElementById('price').value    = '';
+}
+</script>
+</body>
+</html>

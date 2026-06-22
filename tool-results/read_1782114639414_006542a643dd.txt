@@ -1,0 +1,852 @@
+     1→     1→     1→<!DOCTYPE html>
+     2→     2→     2→<html lang="ar" dir="rtl">
+     3→     3→     3→<head>
+     4→     4→     4→<meta charset="UTF-8">
+     5→     5→     5→<meta name="viewport" content="width=device-width, initial-scale=1.0">
+     6→     6→     6→<title>مولّد العناوين العقارية — صدى العقار</title>
+     7→     7→     7→<meta name="description" content="أنشئ عنواناً تسويقياً احترافياً لعقارك في ثوانٍ — مجاناً بالكامل">
+     8→     8→     8→<meta property="og:title" content="مولّد العناوين العقارية المجاني — صدى العقار">
+     9→     9→     9→<meta property="og:description" content="أدخل بيانات عقارك واحصل على عنوان تسويقي يجذب المشترين — في أقل من 10 ثوانٍ">
+    10→    10→    10→<meta property="og:type" content="website">
+    11→    11→    11→<style>
+    12→    12→    12→  @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&display=swap');
+    13→    13→    13→
+    14→    14→    14→  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    15→    15→    15→
+    16→    16→    16→  :root {
+    17→    17→    17→    --ink:       #0f1117;
+    18→    18→    18→    --ink-light: #3a3d4a;
+    19→    19→    19→    --mist:      #f5f6fa;
+    20→    20→    20→    --border:    #e2e4ed;
+    21→    21→    21→    --gold:      #c9a84c;
+    22→    22→    22→    --gold-soft: #f5edda;
+    23→    23→    23→    --gold-glow: rgba(201,168,76,0.18);
+    24→    24→    24→    --white:     #ffffff;
+    25→    25→    25→    --radius:    14px;
+    26→    26→    26→    --shadow:    0 4px 24px rgba(15,17,23,0.08);
+    27→    27→    27→    --shadow-lg: 0 12px 48px rgba(15,17,23,0.14);
+    28→    28→    28→  }
+    29→    29→    29→
+    30→    30→    30→  html { scroll-behavior: smooth; }
+    31→    31→    31→
+    32→    32→    32→  body {
+    33→    33→    33→    font-family: 'Cairo', sans-serif;
+    34→    34→    34→    background: var(--mist);
+    35→    35→    35→    color: var(--ink);
+    36→    36→    36→    min-height: 100vh;
+    37→    37→    37→    display: flex;
+    38→    38→    38→    flex-direction: column;
+    39→    39→    39→  }
+    40→    40→    40→
+    41→    41→    41→  /* ── HEADER ── */
+    42→    42→    42→  header {
+    43→    43→    43→    background: var(--ink);
+    44→    44→    44→    padding: 18px 24px;
+    45→    45→    45→    display: flex;
+    46→    46→    46→    align-items: center;
+    47→    47→    47→    justify-content: space-between;
+    48→    48→    48→    position: sticky;
+    49→    49→    49→    top: 0;
+    50→    50→    50→    z-index: 100;
+    51→    51→    51→  }
+    52→    52→    52→  .logo {
+    53→    53→    53→    display: flex;
+    54→    54→    54→    align-items: center;
+    55→    55→    55→    gap: 10px;
+    56→    56→    56→    text-decoration: none;
+    57→    57→    57→  }
+    58→    58→    58→  .logo-dot {
+    59→    59→    59→    width: 32px; height: 32px;
+    60→    60→    60→    background: var(--gold);
+    61→    61→    61→    border-radius: 50%;
+    62→    62→    62→    display: flex; align-items: center; justify-content: center;
+    63→    63→    63→    font-size: 16px;
+    64→    64→    64→    flex-shrink: 0;
+    65→    65→    65→  }
+    66→    66→    66→  .logo-text { color: var(--white); font-weight: 700; font-size: 1.05rem; }
+    67→    67→    67→  .logo-sub  { color: rgba(255,255,255,0.45); font-size: 0.72rem; font-weight: 300; }
+    68→    68→    68→
+    69→    69→    69→  .header-cta {
+    70→    70→    70→    background: var(--gold);
+    71→    71→    71→    color: var(--ink);
+    72→    72→    72→    font-family: 'Cairo', sans-serif;
+    73→    73→    73→    font-weight: 700;
+    74→    74→    74→    font-size: 0.82rem;
+    75→    75→    75→    padding: 8px 16px;
+    76→    76→    76→    border-radius: 8px;
+    77→    77→    77→    text-decoration: none;
+    78→    78→    78→    white-space: nowrap;
+    79→    79→    79→    transition: opacity .2s;
+    80→    80→    80→  }
+    81→    81→    81→  .header-cta:hover { opacity: .85; }
+    82→    82→    82→
+    83→    83→    83→  /* ── HERO ── */
+    84→    84→    84→  .hero {
+    85→    85→    85→    background: var(--ink);
+    86→    86→    86→    padding: 60px 24px 80px;
+    87→    87→    87→    text-align: center;
+    88→    88→    88→    position: relative;
+    89→    89→    89→    overflow: hidden;
+    90→    90→    90→  }
+    91→    91→    91→  .hero::before {
+    92→    92→    92→    content: '';
+    93→    93→    93→    position: absolute;
+    94→    94→    94→    top: -60px; left: 50%; transform: translateX(-50%);
+    95→    95→    95→    width: 500px; height: 500px;
+    96→    96→    96→    background: radial-gradient(circle, var(--gold-glow) 0%, transparent 70%);
+    97→    97→    97→    pointer-events: none;
+    98→    98→    98→  }
+    99→    99→    99→  .hero-badge {
+   100→   100→   100→    display: inline-block;
+   101→   101→   101→    background: var(--gold-soft);
+   102→   102→   102→    color: var(--gold);
+   103→   103→   103→    border: 1px solid var(--gold);
+   104→   104→   104→    border-radius: 100px;
+   105→   105→   105→    font-size: 0.78rem;
+   106→   106→   106→    font-weight: 700;
+   107→   107→   107→    padding: 5px 16px;
+   108→   108→   108→    margin-bottom: 22px;
+   109→   109→   109→    letter-spacing: .03em;
+   110→   110→   110→  }
+   111→   111→   111→  .hero h1 {
+   112→   112→   112→    color: var(--white);
+   113→   113→   113→    font-size: clamp(1.7rem, 5vw, 2.6rem);
+   114→   114→   114→    font-weight: 900;
+   115→   115→   115→    line-height: 1.35;
+   116→   116→   116→    max-width: 640px;
+   117→   117→   117→    margin: 0 auto 16px;
+   118→   118→   118→  }
+   119→   119→   119→  .hero h1 span { color: var(--gold); }
+   120→   120→   120→  .hero p {
+   121→   121→   121→    color: rgba(255,255,255,0.55);
+   122→   122→   122→    font-size: 1rem;
+   123→   123→   123→    font-weight: 400;
+   124→   124→   124→    max-width: 480px;
+   125→   125→   125→    margin: 0 auto;
+   126→   126→   126→    line-height: 1.7;
+   127→   127→   127→  }
+   128→   128→   128→
+   129→   129→   129→  /* ── CARD ── */
+   130→   130→   130→  .card-wrap {
+   131→   131→   131→    max-width: 680px;
+   132→   132→   132→    margin: -40px auto 0;
+   133→   133→   133→    padding: 0 20px 60px;
+   134→   134→   134→    position: relative;
+   135→   135→   135→    z-index: 10;
+   136→   136→   136→  }
+   137→   137→   137→  .card {
+   138→   138→   138→    background: var(--white);
+   139→   139→   139→    border-radius: 20px;
+   140→   140→   140→    box-shadow: var(--shadow-lg);
+   141→   141→   141→    overflow: hidden;
+   142→   142→   142→  }
+   143→   143→   143→  .card-header {
+   144→   144→   144→    background: linear-gradient(135deg, var(--gold-soft), #fff8e8);
+   145→   145→   145→    border-bottom: 1px solid #edddb0;
+   146→   146→   146→    padding: 20px 28px;
+   147→   147→   147→    display: flex;
+   148→   148→   148→    align-items: center;
+   149→   149→   149→    gap: 12px;
+   150→   150→   150→  }
+   151→   151→   151→  .card-header-icon {
+   152→   152→   152→    width: 40px; height: 40px;
+   153→   153→   153→    background: var(--gold);
+   154→   154→   154→    border-radius: 10px;
+   155→   155→   155→    display: flex; align-items: center; justify-content: center;
+   156→   156→   156→    font-size: 18px;
+   157→   157→   157→    flex-shrink: 0;
+   158→   158→   158→  }
+   159→   159→   159→  .card-header-text h2 { font-size: 1rem; font-weight: 700; color: var(--ink); }
+   160→   160→   160→  .card-header-text p  { font-size: 0.78rem; color: var(--ink-light); margin-top: 2px; }
+   161→   161→   161→
+   162→   162→   162→  .card-body { padding: 28px; }
+   163→   163→   163→
+   164→   164→   164→  /* ── FORM ── */
+   165→   165→   165→  .fields { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+   166→   166→   166→  @media(max-width:520px){ .fields { grid-template-columns: 1fr; } }
+   167→   167→   167→
+   168→   168→   168→  .field { display: flex; flex-direction: column; gap: 6px; }
+   169→   169→   169→  .field.full { grid-column: 1 / -1; }
+   170→   170→   170→
+   171→   171→   171→  label {
+   172→   172→   172→    font-size: 0.82rem;
+   173→   173→   173→    font-weight: 700;
+   174→   174→   174→    color: var(--ink-light);
+   175→   175→   175→    display: flex; align-items: center; gap: 6px;
+   176→   176→   176→  }
+   177→   177→   177→  label .req { color: var(--gold); }
+   178→   178→   178→
+   179→   179→   179→  select, input[type="text"] {
+   180→   180→   180→    font-family: 'Cairo', sans-serif;
+   181→   181→   181→    font-size: 0.92rem;
+   182→   182→   182→    color: var(--ink);
+   183→   183→   183→    background: var(--mist);
+   184→   184→   184→    border: 1.5px solid var(--border);
+   185→   185→   185→    border-radius: var(--radius);
+   186→   186→   186→    padding: 11px 14px;
+   187→   187→   187→    width: 100%;
+   188→   188→   188→    outline: none;
+   189→   189→   189→    transition: border-color .2s, box-shadow .2s;
+   190→   190→   190→    appearance: none;
+   191→   191→   191→    -webkit-appearance: none;
+   192→   192→   192→    cursor: pointer;
+   193→   193→   193→  }
+   194→   194→   194→  select { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%233a3d4a' stroke-width='2.5'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: left 14px center; padding-left: 36px; }
+   195→   195→   195→  select:focus, input:focus {
+   196→   196→   196→    border-color: var(--gold);
+   197→   197→   197→    box-shadow: 0 0 0 3px var(--gold-glow);
+   198→   198→   198→    background: var(--white);
+   199→   199→   199→  }
+   200→   200→   200→
+   201→   201→   201→  .step-divider {
+   202→   202→   202→    display: flex; align-items: center; gap: 12px;
+   203→   203→   203→    margin: 22px 0 18px;
+   204→   204→   204→    color: var(--ink-light);
+   205→   205→   205→    font-size: 0.78rem;
+   206→   206→   206→    font-weight: 600;
+   207→   207→   207→  }
+   208→   208→   208→  .step-divider::before, .step-divider::after {
+   209→   209→   209→    content: ''; flex: 1;
+   210→   210→   210→    height: 1px; background: var(--border);
+   211→   211→   211→  }
+   212→   212→   212→
+   213→   213→   213→  /* ── GENERATE BUTTON ── */
+   214→   214→   214→  .btn-generate {
+   215→   215→   215→    width: 100%;
+   216→   216→   216→    margin-top: 24px;
+   217→   217→   217→    background: var(--gold);
+   218→   218→   218→    color: var(--ink);
+   219→   219→   219→    border: none;
+   220→   220→   220→    font-family: 'Cairo', sans-serif;
+   221→   221→   221→    font-size: 1rem;
+   222→   222→   222→    font-weight: 900;
+   223→   223→   223→    padding: 16px;
+   224→   224→   224→    border-radius: var(--radius);
+   225→   225→   225→    cursor: pointer;
+   226→   226→   226→    display: flex; align-items: center; justify-content: center; gap: 10px;
+   227→   227→   227→    transition: transform .15s, box-shadow .15s, opacity .2s;
+   228→   228→   228→    box-shadow: 0 4px 20px rgba(201,168,76,0.35);
+   229→   229→   229→  }
+   230→   230→   230→  .btn-generate:hover  { transform: translateY(-2px); box-shadow: 0 8px 28px rgba(201,168,76,0.45); }
+   231→   231→   231→  .btn-generate:active { transform: translateY(0); }
+   232→   232→   232→  .btn-generate:disabled { opacity: .6; cursor: not-allowed; transform: none; }
+   233→   233→   233→
+   234→   234→   234→  /* ── LOADING ── */
+   235→   235→   235→  .loading-wrap {
+   236→   236→   236→    display: none;
+   237→   237→   237→    flex-direction: column;
+   238→   238→   238→    align-items: center;
+   239→   239→   239→    padding: 40px 20px;
+   240→   240→   240→    gap: 16px;
+   241→   241→   241→  }
+   242→   242→   242→  .loading-wrap.show { display: flex; }
+   243→   243→   243→  .spinner {
+   244→   244→   244→    width: 44px; height: 44px;
+   245→   245→   245→    border: 3px solid var(--border);
+   246→   246→   246→    border-top-color: var(--gold);
+   247→   247→   247→    border-radius: 50%;
+   248→   248→   248→    animation: spin .7s linear infinite;
+   249→   249→   249→  }
+   250→   250→   250→  @keyframes spin { to { transform: rotate(360deg); } }
+   251→   251→   251→  .loading-text { color: var(--ink-light); font-size: 0.9rem; font-weight: 600; }
+   252→   252→   252→  .loading-sub  { color: #aaa; font-size: 0.78rem; }
+   253→   253→   253→
+   254→   254→   254→  /* ── RESULT ── */
+   255→   255→   255→  .result-wrap { display: none; padding: 0 28px 28px; }
+   256→   256→   256→  .result-wrap.show { display: block; }
+   257→   257→   257→
+   258→   258→   258→  .result-label {
+   259→   259→   259→    font-size: 0.75rem; font-weight: 700;
+   260→   260→   260→    color: var(--gold); letter-spacing: .06em;
+   261→   261→   261→    text-transform: uppercase;
+   262→   262→   262→    margin-bottom: 14px;
+   263→   263→   263→    display: flex; align-items: center; gap: 8px;
+   264→   264→   264→  }
+   265→   265→   265→  .result-label::after { content: ''; flex:1; height:1px; background: #edddb0; }
+   266→   266→   266→
+   267→   267→   267→  .title-cards { display: flex; flex-direction: column; gap: 12px; }
+   268→   268→   268→
+   269→   269→   269→  .title-card {
+   270→   270→   270→    background: var(--mist);
+   271→   271→   271→    border: 1.5px solid var(--border);
+   272→   272→   272→    border-radius: var(--radius);
+   273→   273→   273→    padding: 16px 18px;
+   274→   274→   274→    position: relative;
+   275→   275→   275→    transition: border-color .2s, box-shadow .2s;
+   276→   276→   276→    cursor: pointer;
+   277→   277→   277→  }
+   278→   278→   278→  .title-card:hover {
+   279→   279→   279→    border-color: var(--gold);
+   280→   280→   280→    box-shadow: 0 0 0 3px var(--gold-glow);
+   281→   281→   281→  }
+   282→   282→   282→  .title-card.copied {
+   283→   283→   283→    border-color: #22c55e;
+   284→   284→   284→    box-shadow: 0 0 0 3px rgba(34,197,94,.15);
+   285→   285→   285→  }
+   286→   286→   286→
+   287→   287→   287→  .platform-tag {
+   288→   288→   288→    display: inline-block;
+   289→   289→   289→    font-size: 0.68rem; font-weight: 700;
+   290→   290→   290→    background: var(--ink);
+   291→   291→   291→    color: var(--white);
+   292→   292→   292→    border-radius: 6px;
+   293→   293→   293→    padding: 3px 10px;
+   294→   294→   294→    margin-bottom: 10px;
+   295→   295→   295→    letter-spacing: .04em;
+   296→   296→   296→  }
+   297→   297→   297→
+   298→   298→   298→  .title-text {
+   299→   299→   299→    font-size: 1rem; font-weight: 700;
+   300→   300→   300→    color: var(--ink);
+   301→   301→   301→    line-height: 1.55;
+   302→   302→   302→  }
+   303→   303→   303→
+   304→   304→   304→  .copy-hint {
+   305→   305→   305→    position: absolute;
+   306→   306→   306→    left: 14px; top: 14px;
+   307→   307→   307→    font-size: 0.7rem;
+   308→   308→   308→    color: #aaa;
+   309→   309→   309→    display: flex; align-items: center; gap: 4px;
+   310→   310→   310→  }
+   311→   311→   311→  .copy-hint svg { width:13px; height:13px; }
+   312→   312→   312→
+   313→   313→   313→  .copied-badge {
+   314→   314→   314→    display: none;
+   315→   315→   315→    position: absolute;
+   316→   316→   316→    left: 14px; top: 14px;
+   317→   317→   317→    font-size: 0.7rem;
+   318→   318→   318→    color: #22c55e;
+   319→   319→   319→    font-weight: 700;
+   320→   320→   320→  }
+   321→   321→   321→  .title-card.copied .copy-hint  { display: none; }
+   322→   322→   322→  .title-card.copied .copied-badge { display: block; }
+   323→   323→   323→
+   324→   324→   324→  /* ── UPGRADE BANNER ── */
+   325→   325→   325→  .upgrade-banner {
+   326→   326→   326→    margin: 24px 0 0;
+   327→   327→   327→    background: linear-gradient(135deg, var(--ink) 60%, #1e2235);
+   328→   328→   328→    border-radius: 16px;
+   329→   329→   329→    padding: 24px;
+   330→   330→   330→    text-align: center;
+   331→   331→   331→    position: relative;
+   332→   332→   332→    overflow: hidden;
+   333→   333→   333→  }
+   334→   334→   334→  .upgrade-banner::before {
+   335→   335→   335→    content: '';
+   336→   336→   336→    position: absolute;
+   337→   337→   337→    top: -30px; right: -30px;
+   338→   338→   338→    width: 120px; height: 120px;
+   339→   339→   339→    background: radial-gradient(circle, var(--gold-glow) 0%, transparent 70%);
+   340→   340→   340→  }
+   341→   341→   341→  .upgrade-banner h3 {
+   342→   342→   342→    color: var(--white);
+   343→   343→   343→    font-size: 1rem;
+   344→   344→   344→    font-weight: 800;
+   345→   345→   345→    margin-bottom: 8px;
+   346→   346→   346→  }
+   347→   347→   347→  .upgrade-banner p {
+   348→   348→   348→    color: rgba(255,255,255,0.5);
+   349→   349→   349→    font-size: 0.82rem;
+   350→   350→   350→    line-height: 1.6;
+   351→   351→   351→    margin-bottom: 18px;
+   352→   352→   352→    max-width: 380px;
+   353→   353→   353→    margin-left: auto; margin-right: auto;
+   354→   354→   354→  }
+   355→   355→   355→  .upgrade-features {
+   356→   356→   356→    display: flex;
+   357→   357→   357→    flex-wrap: wrap;
+   358→   358→   358→    justify-content: center;
+   359→   359→   359→    gap: 8px;
+   360→   360→   360→    margin-bottom: 20px;
+   361→   361→   361→  }
+   362→   362→   362→  .upgrade-feat {
+   363→   363→   363→    background: rgba(201,168,76,0.12);
+   364→   364→   364→    border: 1px solid rgba(201,168,76,0.3);
+   365→   365→   365→    color: var(--gold);
+   366→   366→   366→    font-size: 0.75rem;
+   367→   367→   367→    font-weight: 600;
+   368→   368→   368→    padding: 5px 12px;
+   369→   369→   369→    border-radius: 100px;
+   370→   370→   370→  }
+   371→   371→   371→  .btn-upgrade {
+   372→   372→   372→    display: inline-flex;
+   373→   373→   373→    align-items: center;
+   374→   374→   374→    gap: 8px;
+   375→   375→   375→    background: var(--gold);
+   376→   376→   376→    color: var(--ink);
+   377→   377→   377→    font-family: 'Cairo', sans-serif;
+   378→   378→   378→    font-size: 0.92rem;
+   379→   379→   379→    font-weight: 900;
+   380→   380→   380→    padding: 13px 28px;
+   381→   381→   381→    border-radius: var(--radius);
+   382→   382→   382→    text-decoration: none;
+   383→   383→   383→    transition: transform .15s, box-shadow .15s;
+   384→   384→   384→    box-shadow: 0 4px 20px rgba(201,168,76,0.35);
+   385→   385→   385→  }
+   386→   386→   386→  .btn-upgrade:hover { transform: translateY(-2px); box-shadow: 0 8px 28px rgba(201,168,76,0.45); }
+   387→   387→   387→
+   388→   388→   388→  /* ── TRY AGAIN ── */
+   389→   389→   389→  .btn-again {
+   390→   390→   390→    width: 100%;
+   391→   391→   391→    margin-top: 14px;
+   392→   392→   392→    background: transparent;
+   393→   393→   393→    border: 1.5px solid var(--border);
+   394→   394→   394→    font-family: 'Cairo', sans-serif;
+   395→   395→   395→    font-size: 0.88rem;
+   396→   396→   396→    font-weight: 700;
+   397→   397→   397→    color: var(--ink-light);
+   398→   398→   398→    padding: 11px;
+   399→   399→   399→    border-radius: var(--radius);
+   400→   400→   400→    cursor: pointer;
+   401→   401→   401→    transition: border-color .2s, color .2s;
+   402→   402→   402→  }
+   403→   403→   403→  .btn-again:hover { border-color: var(--gold); color: var(--gold); }
+   404→   404→   404→
+   405→   405→   405→  /* ── SHARE STRIP ── */
+   406→   406→   406→  .share-strip {
+   407→   407→   407→    display: none;
+   408→   408→   408→    align-items: center;
+   409→   409→   409→    justify-content: center;
+   410→   410→   410→    gap: 10px;
+   411→   411→   411→    margin-top: 18px;
+   412→   412→   412→    padding-top: 18px;
+   413→   413→   413→    border-top: 1px solid var(--border);
+   414→   414→   414→  }
+   415→   415→   415→  .share-strip.show { display: flex; }
+   416→   416→   416→  .share-label { font-size: 0.8rem; color: var(--ink-light); font-weight: 600; }
+   417→   417→   417→  .btn-share {
+   418→   418→   418→    display: inline-flex; align-items: center; gap: 6px;
+   419→   419→   419→    background: #25D366;
+   420→   420→   420→    color: #fff;
+   421→   421→   421→    border: none;
+   422→   422→   422→    font-family: 'Cairo', sans-serif;
+   423→   423→   423→    font-size: 0.82rem;
+   424→   424→   424→    font-weight: 700;
+   425→   425→   425→    padding: 9px 16px;
+   426→   426→   426→    border-radius: 10px;
+   427→   427→   427→    cursor: pointer;
+   428→   428→   428→    text-decoration: none;
+   429→   429→   429→    transition: opacity .2s;
+   430→   430→   430→  }
+   431→   431→   431→  .btn-share:hover { opacity: .88; }
+   432→   432→   432→
+   433→   433→   433→  /* ── SOCIAL PROOF ── */
+   434→   434→   434→  .proof-strip {
+   435→   435→   435→    max-width: 680px;
+   436→   436→   436→    margin: 0 auto 40px;
+   437→   437→   437→    padding: 0 20px;
+   438→   438→   438→    display: flex;
+   439→   439→   439→    flex-wrap: wrap;
+   440→   440→   440→    gap: 12px;
+   441→   441→   441→    justify-content: center;
+   442→   442→   442→  }
+   443→   443→   443→  .proof-card {
+   444→   444→   444→    background: var(--white);
+   445→   445→   445→    border: 1px solid var(--border);
+   446→   446→   446→    border-radius: 12px;
+   447→   447→   447→    padding: 14px 18px;
+   448→   448→   448→    flex: 1; min-width: 200px; max-width: 300px;
+   449→   449→   449→    display: flex; align-items: flex-start; gap: 10px;
+   450→   450→   450→  }
+   451→   451→   451→  .proof-icon { font-size: 22px; flex-shrink: 0; margin-top: 2px; }
+   452→   452→   452→  .proof-text { font-size: 0.8rem; color: var(--ink-light); line-height: 1.55; }
+   453→   453→   453→  .proof-text strong { color: var(--ink); display: block; margin-bottom: 2px; }
+   454→   454→   454→
+   455→   455→   455→  /* ── FOOTER ── */
+   456→   456→   456→  footer {
+   457→   457→   457→    margin-top: auto;
+   458→   458→   458→    text-align: center;
+   459→   459→   459→    padding: 24px;
+   460→   460→   460→    font-size: 0.75rem;
+   461→   461→   461→    color: #aaa;
+   462→   462→   462→    border-top: 1px solid var(--border);
+   463→   463→   463→  }
+   464→   464→   464→  footer a { color: var(--gold); text-decoration: none; }
+   465→   465→   465→
+   466→   466→   466→  /* ── ERROR ── */
+   467→   467→   467→  .error-msg {
+   468→   468→   468→    display: none;
+   469→   469→   469→    background: #fff2f2;
+   470→   470→   470→    border: 1px solid #fca5a5;
+   471→   471→   471→    color: #b91c1c;
+   472→   472→   472→    border-radius: 10px;
+   473→   473→   473→    padding: 12px 16px;
+   474→   474→   474→    font-size: 0.85rem;
+   475→   475→   475→    margin-top: 16px;
+   476→   476→   476→    text-align: center;
+   477→   477→   477→  }
+   478→   478→   478→  .error-msg.show { display: block; }
+   479→   479→   479→</style>
+   480→   480→   480→</head>
+   481→   481→   481→<body>
+   482→   482→   482→
+   483→   483→   483→<!-- HEADER -->
+   484→   484→   484→<header>
+   485→   485→   485→  <a class="logo" href="https://sada-elaqar.vercel.app" target="_blank">
+   486→   486→   486→    <div class="logo-dot">🏠</div>
+   487→   487→   487→    <div>
+   488→   488→   488→      <div class="logo-text">صدى العقار</div>
+   489→   489→   489→      <div class="logo-sub">مساعد التسويق العقاري</div>
+   490→   490→   490→    </div>
+   491→   491→   491→  </a>
+   492→   492→   492→  <a class="header-cta" href="https://sada-elaqar.vercel.app" target="_blank">جرّب النسخة الكاملة ←</a>
+   493→   493→   493→</header>
+   494→   494→   494→
+   495→   495→   495→<!-- HERO -->
+   496→   496→   496→<section class="hero">
+   497→   497→   497→  <div class="hero-badge">🎁 مجاناً بالكامل — بدون تسجيل</div>
+   498→   498→   498→  <h1>أنشئ <span>عنواناً تسويقياً</span><br>لعقارك في 7 ثوانٍ</h1>
+   499→   499→   499→  <p>أدخل نوع العقار والمدينة — وسيكتب الذكاء الاصطناعي لك عناوين جاهزة للنشر</p>
+   500→   500→   500→</section>
+   501→   501→   501→
+   502→   502→   502→<!-- MAIN CARD -->
+   503→   503→   503→<div class="card-wrap">
+   504→   504→   504→  <div class="card">
+   505→   505→   505→    <div class="card-header">
+   506→   506→   506→      <div class="card-header-icon">✍️</div>
+   507→   507→   507→      <div class="card-header-text">
+   508→   508→   508→        <h2>بيانات العقار</h2>
+   509→   509→   509→        <p>خطوتان فقط — والعنوان جاهز</p>
+   510→   510→   510→      </div>
+   511→   511→   511→    </div>
+   512→   512→   512→
+   513→   513→   513→    <div class="card-body" id="formSection">
+   514→   514→   514→      <div class="fields">
+   515→   515→   515→        <div class="field">
+   516→   516→   516→          <label>نوع العقار <span class="req">*</span></label>
+   517→   517→   517→          <select id="propType">
+   518→   518→   518→            <option value="">— اختر —</option>
+   519→   519→   519→            <optgroup label="سكني">
+   520→   520→   520→              <option value="شقة">شقة</option>
+   521→   521→   521→              <option value="فيلا">فيلا</option>
+   522→   522→   522→              <option value="استوديو">استوديو</option>
+   523→   523→   523→              <option value="بنتهاوس">بنتهاوس</option>
+   524→   524→   524→              <option value="دوبلكس">دوبلكس</option>
+   525→   525→   525→              <option value="شاليه">شاليه</option>
+   526→   526→   526→              <option value="عمارة سكنية">عمارة سكنية</option>
+   527→   527→   527→            </optgroup>
+   528→   528→   528→            <optgroup label="تجاري">
+   529→   529→   529→              <option value="محل تجاري">محل تجاري</option>
+   530→   530→   530→              <option value="مكتب تجاري">مكتب تجاري</option>
+   531→   531→   531→            </optgroup>
+   532→   532→   532→            <optgroup label="أراضي">
+   533→   533→   533→              <option value="أرض سكنية">أرض سكنية</option>
+   534→   534→   534→              <option value="أرض تجارية">أرض تجارية</option>
+   535→   535→   535→            </optgroup>
+   536→   536→   536→          </select>
+   537→   537→   537→        </div>
+   538→   538→   538→
+   539→   539→   539→        <div class="field">
+   540→   540→   540→          <label>الغرض <span class="req">*</span></label>
+   541→   541→   541→          <select id="purpose">
+   542→   542→   542→            <option value="">— اختر —</option>
+   543→   543→   543→            <option value="للبيع">للبيع</option>
+   544→   544→   544→            <option value="للإيجار">للإيجار</option>
+   545→   545→   545→            <option value="للاستثمار">للاستثمار</option>
+   546→   546→   546→          </select>
+   547→   547→   547→        </div>
+   548→   548→   548→
+   549→   549→   549→        <div class="field">
+   550→   550→   550→          <label>المدينة <span class="req">*</span></label>
+   551→   551→   551→          <select id="city">
+   552→   552→   552→            <option value="">— اختر —</option>
+   553→   553→   553→            <optgroup label="السعودية">
+   554→   554→   554→              <option>الرياض</option><option>جدة</option><option>مكة المكرمة</option>
+   555→   555→   555→              <option>الدمام</option><option>المدينة المنورة</option><option>الخبر</option>
+   556→   556→   556→            </optgroup>
+   557→   557→   557→            <optgroup label="الإمارات">
+   558→   558→   558→              <option>دبي</option><option>أبوظبي</option><option>الشارقة</option>
+   559→   559→   559→              <option>عجمان</option><option>رأس الخيمة</option>
+   560→   560→   560→            </optgroup>
+   561→   561→   561→            <optgroup label="الخليج">
+   562→   562→   562→              <option>الدوحة</option><option>الكويت</option><option>مسقط</option><option>المنامة</option>
+   563→   563→   563→            </optgroup>
+   564→   564→   564→            <optgroup label="أخرى">
+   565→   565→   565→              <option>القاهرة</option><option>عمّان</option><option>بيروت</option><option>الدار البيضاء</option>
+   566→   566→   566→            </optgroup>
+   567→   567→   567→          </select>
+   568→   568→   568→        </div>
+   569→   569→   569→
+   570→   570→   570→        <div class="field">
+   571→   571→   571→          <label>الحي / المنطقة</label>
+   572→   572→   572→          <input type="text" id="area" placeholder="مثال: حي النرجس، وسط المدينة">
+   573→   573→   573→        </div>
+   574→   574→   574→      </div>
+   575→   575→   575→
+   576→   576→   576→      <div class="step-divider">تفاصيل إضافية (اختياري — تحسّن النتيجة)</div>
+   577→   577→   577→
+   578→   578→   578→      <div class="fields">
+   579→   579→   579→        <div class="field">
+   580→   580→   580→          <label>المساحة (م²)</label>
+   581→   581→   581→          <input type="text" id="space" placeholder="مثال: 150">
+   582→   582→   582→        </div>
+   583→   583→   583→        <div class="field">
+   584→   584→   584→          <label>عدد الغرف</label>
+   585→   585→   585→          <select id="rooms">
+   586→   586→   586→            <option value="">—</option>
+   587→   587→   587→            <option>استوديو</option>
+   588→   588→   588→            <option>غرفة واحدة</option>
+   589→   589→   589→            <option>غرفتان</option>
+   590→   590→   590→            <option>3 غرف</option>
+   591→   591→   591→            <option>4 غرف</option>
+   592→   592→   592→            <option>5 غرف وأكثر</option>
+   593→   593→   593→          </select>
+   594→   594→   594→        </div>
+   595→   595→   595→        <div class="field">
+   596→   596→   596→          <label>ميزة بارزة</label>
+   597→   597→   597→          <select id="feature">
+   598→   598→   598→            <option value="">— اختر إن وجد —</option>
+   599→   599→   599→            <option>إطلالة بحرية</option>
+   600→   600→   600→            <option>إطلالة على الحديقة</option>
+   601→   601→   601→            <option>موقع مميز</option>
+   602→   602→   602→            <option>تشطيب فاخر</option>
+   603→   603→   603→            <option>قريب من المسجد</option>
+   604→   604→   604→            <option>قريب من المدارس</option>
+   605→   605→   605→            <option>مسبح خاص</option>
+   606→   606→   606→            <option>فرصة استثمارية</option>
+   607→   607→   607→            <option>تسليم فوري</option>
+   608→   608→   608→          </select>
+   609→   609→   609→        </div>
+   610→   610→   610→        <div class="field">
+   611→   611→   611→          <label>السعر</label>
+   612→   612→   612→          <input type="text" id="price" placeholder="مثال: 850,000 ريال">
+   613→   613→   613→        </div>
+   614→   614→   614→      </div>
+   615→   615→   615→
+   616→   616→   616→      <div class="error-msg" id="errorMsg">⚠️ يرجى اختيار نوع العقار والغرض والمدينة على الأقل</div>
+   617→   617→   617→
+   618→   618→   618→      <button class="btn-generate" id="generateBtn" onclick="generateTitles()">
+   619→   619→   619→        <span>⚡</span>
+   620→   620→   620→        <span>أنشئ العناوين التسويقية الآن</span>
+   621→   621→   621→      </button>
+   622→   622→   622→    </div>
+   623→   623→   623→
+   624→   624→   624→    <!-- LOADING -->
+   625→   625→   625→    <div class="loading-wrap" id="loadingWrap">
+   626→   626→   626→      <div class="spinner"></div>
+   627→   627→   627→      <div class="loading-text">صدى العقار يكتب لك...</div>
+   628→   628→   628→      <div class="loading-sub">يحلّل البيانات ويصيغ أفضل العناوين</div>
+   629→   629→   629→    </div>
+   630→   630→   630→
+   631→   631→   631→    <!-- RESULT -->
+   632→   632→   632→    <div class="result-wrap" id="resultWrap">
+   633→   633→   633→      <div class="result-label">العناوين التسويقية الجاهزة</div>
+   634→   634→   634→      <div class="title-cards" id="titleCards"></div>
+   635→   635→   635→
+   636→   636→   636→      <!-- UPGRADE BANNER -->
+   637→   637→   637→      <div class="upgrade-banner">
+   638→   638→   638→        <h3>🚀 هذا مجرد البداية — النسخة الكاملة تفعل أكثر</h3>
+   639→   639→   639→        <p>وصف عقاري كامل · هاشتاجات احترافية · محتوى لكل منصة · منشور واتساب جاهز</p>
+   640→   640→   640→        <div class="upgrade-features">
+   641→   641→   641→          <span class="upgrade-feat">📝 وصف تسويقي كامل</span>
+   642→   642→   642→          <span class="upgrade-feat"># هاشتاجات ذكية</span>
+   643→   643→   643→          <span class="upgrade-feat">📱 منشور إنستغرام</span>
+   644→   644→   644→          <span class="upgrade-feat">💬 رسالة واتساب</span>
+   645→   645→   645→          <span class="upgrade-feat">💼 منشور لينكدإن</span>
+   646→   646→   646→        </div>
+   647→   647→   647→        <a class="btn-upgrade" href="https://sada-elaqar.vercel.app#demo" target="_blank">
+   648→   648→   648→          <span>جرّب النسخة الكاملة مجاناً</span>
+   649→   649→   649→          <span>←</span>
+   650→   650→   650→        </a>
+   651→   651→   651→      </div>
+   652→   652→   652→
+   653→   653→   653→      <!-- SHARE -->
+   654→   654→   654→      <div class="share-strip show">
+   655→   655→   655→        <span class="share-label">أعجبتك الأداة؟ شارك زملاءك:</span>
+   656→   656→   656→        <a class="btn-share" id="whatsappShare" href="#" target="_blank">
+   657→   657→   657→          <svg viewBox="0 0 24 24" width="15" height="15" fill="white"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+   658→   658→   658→          شارك عبر واتساب
+   659→   659→   659→        </a>
+   660→   660→   660→      </div>
+   661→   661→   661→
+   662→   662→   662→      <button class="btn-again" onclick="resetForm()">← أنشئ عناوين لعقار آخر</button>
+   663→   663→   663→    </div>
+   664→   664→   664→  </div>
+   665→   665→   665→
+   666→   666→   666→  <!-- PROOF CARDS -->
+   667→   667→   667→  <div class="proof-strip" style="margin-top:24px;">
+   668→   668→   668→    <div class="proof-card">
+   669→   669→   669→      <div class="proof-icon">⚡</div>
+   670→   670→   670→      <div class="proof-text">
+   671→   671→   671→        <strong>7 ثوانٍ بدلاً من ساعة</strong>
+   672→   672→   672→        وكلاء عقاريون يوفّرون ساعات يومياً باستخدام صدى العقار
+   673→   673→   673→      </div>
+   674→   674→   674→    </div>
+   675→   675→   675→    <div class="proof-card">
+   676→   676→   676→      <div class="proof-icon">🌍</div>
+   677→   677→   677→      <div class="proof-text">
+   678→   678→   678→        <strong>بلهجة بلدك تماماً</strong>
+   679→   679→   679→        محتوى مخصّص للسعودية والإمارات وقطر والكويت وكل دول الخليج
+   680→   680→   680→      </div>
+   681→   681→   681→    </div>
+   682→   682→   682→    <div class="proof-card">
+   683→   683→   683→      <div class="proof-icon">🎯</div>
+   684→   684→   684→      <div class="proof-text">
+   685→   685→   685→        <strong>لكل منصة أسلوبها</strong>
+   686→   686→   686→        واتساب، إنستغرام، تويتر، لينكدإن — كل محتوى مضبوط لجمهوره
+   687→   687→   687→      </div>
+   688→   688→   688→    </div>
+   689→   689→   689→  </div>
+   690→   690→   690→</div>
+   691→   691→   691→
+   692→   692→   692→<footer>
+   693→   693→   693→  أداة مجانية من <a href="https://sada-elaqar.vercel.app" target="_blank">صدى العقار</a> — مساعد التسويق العقاري للسوق العربي
+   694→   694→   694→</footer>
+   695→   695→   695→
+   696→   696→   696→<script>
+   697→   697→   697→const ANTHROPIC_API = "https://api.anthropic.com/v1/messages";
+   698→   698→   698→
+   699→   699→   699→async function generateTitles() {
+   700→   700→   700→  const propType = document.getElementById('propType').value;
+   701→   701→   701→  const purpose  = document.getElementById('purpose').value;
+   702→   702→   702→  const city     = document.getElementById('city').value;
+   703→   703→   703→  const area     = document.getElementById('area').value;
+   704→   704→   704→  const space    = document.getElementById('space').value;
+   705→   705→   705→  const rooms    = document.getElementById('rooms').value;
+   706→   706→   706→  const feature  = document.getElementById('feature').value;
+   707→   707→   707→  const price    = document.getElementById('price').value;
+   708→   708→   708→
+   709→   709→   709→  const errorMsg = document.getElementById('errorMsg');
+   710→   710→   710→  if (!propType || !purpose || !city) {
+   711→   711→   711→    errorMsg.classList.add('show');
+   712→   712→   712→    return;
+   713→   713→   713→  }
+   714→   714→   714→  errorMsg.classList.remove('show');
+   715→   715→   715→
+   716→   716→   716→  // Build prompt
+   717→   717→   717→  const extras = [
+   718→   718→   718→    space   ? `المساحة: ${space} م²` : '',
+   719→   719→   719→    rooms   ? `عدد الغرف: ${rooms}` : '',
+   720→   720→   720→    feature ? `ميزة بارزة: ${feature}` : '',
+   721→   721→   721→    price   ? `السعر: ${price}` : '',
+   722→   722→   722→    area    ? `الحي/المنطقة: ${area}` : '',
+   723→   723→   723→  ].filter(Boolean).join('، ');
+   724→   724→   724→
+   725→   725→   725→  const prompt = `أنت خبير في التسويق العقاري للسوق العربي والخليجي.
+   726→   726→   726→
+   727→   727→   727→بيانات العقار:
+   728→   728→   728→- النوع: ${propType}
+   729→   729→   729→- الغرض: ${purpose}
+   730→   730→   730→- المدينة: ${city}
+   731→   731→   731→${extras ? `- تفاصيل إضافية: ${extras}` : ''}
+   732→   732→   732→
+   733→   733→   733→المطلوب: اكتب بالضبط 4 عناوين تسويقية جذابة وقوية لهذا العقار، كل عنوان مخصص لمنصة مختلفة.
+   734→   734→   734→
+   735→   735→   735→أجب فقط بهذا الـ JSON بدون أي كلام إضافي أو backticks:
+   736→   736→   736→{
+   737→   737→   737→  "titles": [
+   738→   738→   738→    {"platform": "واتساب", "title": "..."},
+   739→   739→   739→    {"platform": "إنستغرام", "title": "..."},
+   740→   740→   740→    {"platform": "تويتر / X", "title": "..."},
+   741→   741→   741→    {"platform": "لينكدإن", "title": "..."}
+   742→   742→   742→  ]
+   743→   743→   743→}
+   744→   744→   744→
+   745→   745→   745→قواعد كل عنوان:
+   746→   746→   746→- واتساب: تفصيلي وودود، يذكر المميزات والموقع، ينتهي بدعوة للتواصل (لا يتجاوز 3 أسطر)
+   747→   747→   747→- إنستغرام: جذاب ومشاعري، يستخدم نقاط وإيموجي مناسبة، قصير وقوي
+   748→   748→   748→- تويتر/X: مباشر وصادم، لا يتجاوز 200 حرف، يثير الفضول
+   749→   749→   749→- لينكدإن: احترافي واستثماري، يركز على العائد والقيمة، لغة أعمال
+   750→   750→   750→
+   751→   751→   751→اكتب بلهجة عربية فصيحة مناسبة لمدينة ${city}. لا تستخدم كلمات إنجليزية.`;
+   752→   752→   752→
+   753→   753→   753→  // Show loading
+   754→   754→   754→  document.getElementById('formSection').style.display = 'none';
+   755→   755→   755→  document.getElementById('loadingWrap').classList.add('show');
+   756→   756→   756→  document.getElementById('resultWrap').classList.remove('show');
+   757→   757→   757→  document.getElementById('generateBtn') && (document.getElementById('generateBtn').disabled = true);
+   758→   758→   758→
+   759→   759→   759→  try {
+   760→   760→   760→    const res = await fetch(ANTHROPIC_API, {
+   761→   761→   761→      method: 'POST',
+   762→   762→   762→      headers: { 'Content-Type': 'application/json' },
+   763→   763→   763→      body: JSON.stringify({
+   764→   764→   764→        model: 'claude-sonnet-4-6',
+   765→   765→   765→        max_tokens: 1000,
+   766→   766→   766→        messages: [{ role: 'user', content: prompt }]
+   767→   767→   767→      })
+   768→   768→   768→    });
+   769→   769→   769→
+   770→   770→   770→    const data = await res.json();
+   771→   771→   771→    const text = data.content?.map(i => i.text || '').join('') || '';
+   772→   772→   772→
+   773→   773→   773→    let parsed;
+   774→   774→   774→    try {
+   775→   775→   775→      const clean = text.replace(/```json|```/g, '').trim();
+   776→   776→   776→      parsed = JSON.parse(clean);
+   777→   777→   777→    } catch {
+   778→   778→   778→      throw new Error('تعذّر تحليل الاستجابة');
+   779→   779→   779→    }
+   780→   780→   780→
+   781→   781→   781→    renderResults(parsed.titles, propType, purpose, city);
+   782→   782→   782→  } catch (err) {
+   783→   783→   783→    document.getElementById('formSection').style.display = 'block';
+   784→   784→   784→    document.getElementById('loadingWrap').classList.remove('show');
+   785→   785→   785→    const errEl = document.getElementById('errorMsg');
+   786→   786→   786→    errEl.textContent = '⚠️ حدث خطأ أثناء التوليد — تحقق من اتصالك وحاول مجدداً';
+   787→   787→   787→    errEl.classList.add('show');
+   788→   788→   788→  }
+   789→   789→   789→}
+   790→   790→   790→
+   791→   791→   791→function renderResults(titles, propType, purpose, city) {
+   792→   792→   792→  document.getElementById('loadingWrap').classList.remove('show');
+   793→   793→   793→
+   794→   794→   794→  const container = document.getElementById('titleCards');
+   795→   795→   795→  container.innerHTML = '';
+   796→   796→   796→
+   797→   797→   797→  const platformColors = {
+   798→   798→   798→    'واتساب':    '#25D366',
+   799→   799→   799→    'إنستغرام':  '#E1306C',
+   800→   800→   800→    'تويتر / X': '#000000',
+   801→   801→   801→    'لينكدإن':   '#0A66C2',
+   802→   802→   802→  };
+   803→   803→   803→
+   804→   804→   804→  titles.forEach(({ platform, title }) => {
+   805→   805→   805→    const color = platformColors[platform] || '#333';
+   806→   806→   806→    const card = document.createElement('div');
+   807→   807→   807→    card.className = 'title-card';
+   808→   808→   808→    card.innerHTML = `
+   809→   809→   809→      <span class="platform-tag" style="background:${color}">${platform}</span>
+   810→   810→   810→      <div class="title-text">${title}</div>
+   811→   811→   811→      <span class="copy-hint">
+   812→   812→   812→        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+   813→   813→   813→        انقر للنسخ
+   814→   814→   814→      </span>
+   815→   815→   815→      <span class="copied-badge">✓ تم النسخ</span>
+   816→   816→   816→    `;
+   817→   817→   817→    card.onclick = () => copyTitle(card, title);
+   818→   818→   818→    container.appendChild(card);
+   819→   819→   819→  });
+   820→   820→   820→
+   821→   821→   821→  // WhatsApp share
+   822→   822→   822→  const shareText = `🏠 جرّبت أداة مجانية تكتب عناوين تسويقية لأي عقار في 7 ثوانٍ!\n\nمثال لـ${propType} ${purpose} في ${city}:\n\n"${titles[0]?.title}"\n\nجرّبها مجاناً بدون تسجيل 👇`;
+   823→   823→   823→  const waLink = `https://wa.me/?text=${encodeURIComponent(shareText + '\n\n' + window.location.href)}`;
+   824→   824→   824→  document.getElementById('whatsappShare').href = waLink;
+   825→   825→   825→
+   826→   826→   826→  document.getElementById('resultWrap').classList.add('show');
+   827→   827→   827→}
+   828→   828→   828→
+   829→   829→   829→function copyTitle(card, text) {
+   830→   830→   830→  navigator.clipboard.writeText(text).then(() => {
+   831→   831→   831→    card.classList.add('copied');
+   832→   832→   832→    setTimeout(() => card.classList.remove('copied'), 2200);
+   833→   833→   833→  });
+   834→   834→   834→}
+   835→   835→   835→
+   836→   836→   836→function resetForm() {
+   837→   837→   837→  document.getElementById('resultWrap').classList.remove('show');
+   838→   838→   838→  document.getElementById('formSection').style.display = 'block';
+   839→   839→   839→  document.getElementById('generateBtn').disabled = false;
+   840→   840→   840→  document.getElementById('propType').value = '';
+   841→   841→   841→  document.getElementById('purpose').value  = '';
+   842→   842→   842→  document.getElementById('city').value     = '';
+   843→   843→   843→  document.getElementById('area').value     = '';
+   844→   844→   844→  document.getElementById('space').value    = '';
+   845→   845→   845→  document.getElementById('rooms').value    = '';
+   846→   846→   846→  document.getElementById('feature').value  = '';
+   847→   847→   847→  document.getElementById('price').value    = '';
+   848→   848→   848→}
+   849→   849→   849→</script>
+   850→   850→   850→</body>
+   851→   851→   851→</html>
+   852→   852→   852→

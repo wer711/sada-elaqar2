@@ -1,0 +1,55 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Post {
+  id        String   @id @default(cuid())
+  title     String
+  content   String?
+  published Boolean  @default(false)
+  authorId  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Lead {
+  id          String   @id @default(cuid())
+  name        String?
+  whatsapp    String?
+  email       String?
+  country     String?
+  role        String?
+  propType    String?
+  purpose     String?
+  city        String?
+  source      String   @default("title-tool")
+  createdAt   DateTime @default(now())
+}
+
+model TitleGeneration {
+  id        String   @id @default(cuid())
+  leadId    String?
+  propType  String
+  purpose   String
+  city      String
+  area      String?
+  space     String?
+  rooms     String?
+  feature   String?
+  price     String?
+  results   String   // JSON string
+  createdAt DateTime @default(now())
+}
