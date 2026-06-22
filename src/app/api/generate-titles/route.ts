@@ -1,23 +1,22 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 
-// ─── Triple Provider: Groq → Gemini → z-ai ─────────────────
-// Groq: Free, fast, global (no geo-restrictions) — PRIMARY
-// Gemini: Free but geo-restricted — SECONDARY
-// z-ai: Works locally only — FALLBACK
+// ─── Multi-Provider AI System ───────────────────────────────
+// Tries providers in order until one works
+// Groq → OpenRouter → Gemini → z-ai
+
+const AI_PROMPT_SYSTEM = "أنت مساعد تسويق عقاري محترف. أجب فقط بصيغة JSON كما هو مطلوب بدون أي نص إضافي.";
 
 async function generateWithGroq(prompt: string): Promise<string> {
-  const Groq = (await import("groq-sdk")).default;
   const apiKey = process.env.GROQ_API_KEY;
-  if (!apiKey) throw new Error("NO_GROQ_KEY");
+  if (!apiKey) throw new Error("NO_KEY");
 
+  const { default: Groq } = await import("groq-sdk");
   const groq = new Groq({ apiKey });
-  const chatCompletion = await groq.chat.completions.create({
+
+  const chat = await groq.chat.completions.create({
     messages: [
-      {
-        role: "system",
-        content: "أنت مساعد تسويق عقاري محترف. أجب فقط بصيغة JSON كما هو مطلوب بدون أي نص إضافي.",
-      },
+      { role: "system", content: AI_PROMPT_SYSTEM },
       { role: "user", content: prompt },
     ],
     model: "llama-3.3-70b-versatile",
@@ -25,18 +24,52 @@ async function generateWithGroq(prompt: string): Promise<string> {
     max_tokens: 2000,
   });
 
-  return chatCompletion.choices[0]?.message?.content || "";
+  const content = chat.choices[0]?.message?.content;
+  if (!content) throw new Error("Empty response");
+  return content;
+}
+
+async function generateWithOpenRouter(prompt: string): Promise<string> {
+  const apiKey = process.env.OPENROUTER_API_KEY;
+  if (!apiKey) throw new Error("NO_KEY");
+
+  // OpenRouter uses OpenAI-compatible API
+  const OpenAI = (await import("openai")).default;
+  const client = new OpenAI({
+    baseURL: "https://openrouter.ai/api/v1",
+    apiKey: apiKey,
+    defaultHeaders: {
+      "HTTP-Referer": "https://sada-elaqar.vercel.app",
+      "X-Title": "صدى العقار",
+    },
+  });
+
+  const chat = await client.chat.completions.create({
+    model: "deepseek/deepseek-chat-v3-0324:free",
+    messages: [
+      { role: "system", content: AI_PROMPT_SYSTEM },
+      { role: "user", content: prompt },
+    ],
+    temperature: 0.7,
+    max_tokens: 2000,
+  });
+
+  const content = chat.choices[0]?.message?.content;
+  if (!content) throw new Error("Empty response");
+  return content;
 }
 
 async function generateWithGemini(prompt: string): Promise<string> {
-  const { GoogleGenerativeAI } = await import("@google/generative-ai");
   const apiKey = process.env.GEMINI_API_KEY;
-  if (!apiKey) throw new Error("NO_GEMINI_KEY");
+  if (!apiKey) throw new Error("NO_KEY");
 
+  const { GoogleGenerativeAI } = await import("@google/generative-ai");
   const genAI = new GoogleGenerativeAI(apiKey);
   const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
   const result = await model.generateContent(prompt);
-  return result.response.text();
+  const text = result.response.text();
+  if (!text) throw new Error("Empty response");
+  return text;
 }
 
 async function generateWithZai(prompt: string): Promise<string> {
@@ -44,45 +77,55 @@ async function generateWithZai(prompt: string): Promise<string> {
   const zai = await ZAI.create();
   const completion = await zai.chat.completions.create({
     messages: [
-      {
-        role: "assistant",
-        content: "أنت مساعد تسويق عقاري محترف. أجب فقط بصيغة JSON كما هو مطلوب بدون أي نص إضافي.",
-      },
+      { role: "assistant", content: AI_PROMPT_SYSTEM },
       { role: "user", content: prompt },
     ],
     thinking: { type: "disabled" },
   });
-  return completion.choices[0]?.message?.content || "";
+  const content = completion.choices[0]?.message?.content;
+  if (!content) throw new Error("Empty response");
+  return content;
+}
+
+type ProviderFn = (prompt: string) => Promise<string>;
+
+interface Provider {
+  name: string;
+  fn: ProviderFn;
+}
+
+function getProviders(): Provider[] {
+  const providers: Provider[] = [];
+
+  if (process.env.GROQ_API_KEY) {
+    providers.push({ name: "Groq", fn: generateWithGroq });
+  }
+  if (process.env.OPENROUTER_API_KEY) {
+    providers.push({ name: "OpenRouter", fn: generateWithOpenRouter });
+  }
+  if (process.env.GEMINI_API_KEY) {
+    providers.push({ name: "Gemini", fn: generateWithGemini });
+  }
+  // z-ai always available as last resort
+  providers.push({ name: "z-ai", fn: generateWithZai });
+
+  return providers;
 }
 
 async function generateContent(prompt: string): Promise<string> {
+  const providers = getProviders();
   const errors: string[] = [];
 
-  // 1. Try Groq (best for production — free, fast, global)
-  try {
-    return await generateWithGroq(prompt);
-  } catch (e) {
-    const msg = e instanceof Error ? e.message : "unknown";
-    errors.push(`Groq: ${msg}`);
-    console.log(`Groq failed (${msg})`);
-  }
-
-  // 2. Try Gemini (free but geo-restricted)
-  try {
-    return await generateWithGemini(prompt);
-  } catch (e) {
-    const msg = e instanceof Error ? e.message : "unknown";
-    errors.push(`Gemini: ${msg}`);
-    console.log(`Gemini failed (${msg})`);
-  }
-
-  // 3. Try z-ai (local dev fallback)
-  try {
-    return await generateWithZai(prompt);
-  } catch (e) {
-    const msg = e instanceof Error ? e.message : "unknown";
-    errors.push(`z-ai: ${msg}`);
-    console.log(`z-ai failed (${msg})`);
+  for (const provider of providers) {
+    try {
+      const result = await provider.fn(prompt);
+      console.log(`✅ ${provider.name} succeeded`);
+      return result;
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : "unknown";
+      errors.push(`${provider.name}: ${msg}`);
+      console.log(`❌ ${provider.name} failed (${msg})`);
+    }
   }
 
   throw new Error(`All AI providers failed: ${errors.join(" | ")}`);
@@ -215,7 +258,6 @@ ${extras ? `- تفاصيل إضافية: ${extras}` : ""}
 
 اكتب بلهجة عربية فصيحة مناسبة لمدينة ${city}. لا تستخدم كلمات إنجليزية.`;
 
-    // ── Generate with triple provider ──
     const text = await generateContent(prompt);
 
     let parsed;
