@@ -145,32 +145,23 @@ const ROLES = [
 // ─── Simulated user counter ────────────────────────────────
 function useUserCounter() {
   const [count, setCount] = useState(2847);
+  const [mounted, setMounted] = useState(false);
   useEffect(() => {
+    setMounted(true);
     const interval = setInterval(() => {
       setCount((prev) => prev + Math.floor(Math.random() * 3));
     }, 8000 + Math.random() * 12000);
     return () => clearInterval(interval);
   }, []);
-  return count;
+  return mounted ? count : 2847;
 }
 
 // ─── Countdown Timer ───────────────────────────────────────
 function useCountdown() {
-  // 10-day countdown stored in localStorage so it persists across visits
   const STORAGE_KEY = "sada_countdown_end";
   const TEN_DAYS_MS = 10 * 24 * 60 * 60 * 1000;
-
-  const getTarget = (): number => {
-    if (typeof window === "undefined") return Date.now() + TEN_DAYS_MS;
-    const stored = localStorage.getItem(STORAGE_KEY);
-    if (stored) {
-      const end = parseInt(stored, 10);
-      if (end > Date.now()) return end;
-    }
-    const newEnd = Date.now() + TEN_DAYS_MS;
-    localStorage.setItem(STORAGE_KEY, String(newEnd));
-    return newEnd;
-  };
+  // Static initial value for SSR — always 10 days 00:00:00 to avoid hydration mismatch
+  const INITIAL = { days: 10, hours: 0, minutes: 0, seconds: 0 };
 
   const calcRemaining = (target: number) => {
     const diff = Math.max(0, target - Date.now());
@@ -181,10 +172,28 @@ function useCountdown() {
     return { days, hours, minutes, seconds };
   };
 
-  const [timeLeft, setTimeLeft] = useState(() => calcRemaining(getTarget()));
+  const [timeLeft, setTimeLeft] = useState(INITIAL);
 
   useEffect(() => {
-    const target = getTarget();
+    // Calculate real target on client only
+    let target: number;
+    const stored = localStorage.getItem(STORAGE_KEY);
+    if (stored) {
+      const end = parseInt(stored, 10);
+      if (end > Date.now()) {
+        target = end;
+      } else {
+        target = Date.now() + TEN_DAYS_MS;
+        localStorage.setItem(STORAGE_KEY, String(target));
+      }
+    } else {
+      target = Date.now() + TEN_DAYS_MS;
+      localStorage.setItem(STORAGE_KEY, String(target));
+    }
+
+    // Set correct value immediately
+    setTimeLeft(calcRemaining(target));
+
     const timer = setInterval(() => {
       const remaining = calcRemaining(target);
       setTimeLeft(remaining);
