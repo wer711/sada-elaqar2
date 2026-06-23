@@ -1,9 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import { db } from "@/lib/db";
 
-// ─── Event Tracking Endpoint ────────────────────────────────
+// ─── Event Tracking Endpoint (Vercel-Compatible) ──────────────
 // Tracks all page views, clicks, and conversion events
-// Stores in TitleGeneration table using propType/purpose as event markers
+// Falls back to console logging if DB is unavailable (serverless)
 
 export async function POST(req: NextRequest) {
   try {
@@ -25,22 +24,27 @@ export async function POST(req: NextRequest) {
       || req.headers.get("x-real-ip")
       || "unknown";
 
-    // Store tracking event in DB
-    // We reuse TitleGeneration table with special markers
+    // Log the event (always works)
+    console.log(`📊 Track: ${event} | ${city || source || "unknown"} | ${ip.slice(0, 20)}`);
+
+    // Try to save to DB (non-critical, works locally only)
     try {
-      await db.titleGeneration.create({
-        data: {
-          propType: propType || "track",
-          purpose: event || "unknown",
-          city: city || source || "unknown",
-          area: utm_source || null,
-          space: utm_medium || null,
-          rooms: utm_campaign || null,
-          feature: utm_content || platform || null,
-          price: ip || null,
-          results: JSON.stringify({ event, timestamp, ip: ip.slice(0, 20) }),
-        },
-      });
+      const { db } = await import("@/lib/db");
+      if (db) {
+        await db.titleGeneration.create({
+          data: {
+            propType: propType || "track",
+            purpose: event || "unknown",
+            city: city || source || "unknown",
+            area: utm_source || null,
+            space: utm_medium || null,
+            rooms: utm_campaign || null,
+            feature: utm_content || platform || null,
+            price: ip || null,
+            results: JSON.stringify({ event, timestamp, ip: ip.slice(0, 20) }),
+          },
+        });
+      }
     } catch {
       // silently fail — tracking should never break the page
     }

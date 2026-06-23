@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
-import { db } from "@/lib/db";
 
-// ─── Multi-Provider AI System ───────────────────────────────
+// ─── Multi-Provider AI System (Vercel-Compatible) ───────────
 // Tries providers in order until one works
-// Groq → OpenRouter → Gemini → z-ai
+// Groq → OpenRouter → Gemini
+// No SQLite dependency - works on serverless
 
 const AI_PROMPT_SYSTEM = "أنت مساعد تسويق عقاري محترف. أجب فقط بصيغة JSON كما هو مطلوب بدون أي نص إضافي.";
 
@@ -11,21 +11,31 @@ async function generateWithGroq(prompt: string): Promise<string> {
   const apiKey = process.env.GROQ_API_KEY;
   if (!apiKey) throw new Error("NO_KEY");
 
-  const { default: Groq } = await import("groq-sdk");
-  const groq = new Groq({ apiKey });
-
-  const chat = await groq.chat.completions.create({
-    messages: [
-      { role: "system", content: AI_PROMPT_SYSTEM },
-      { role: "user", content: prompt },
-    ],
-    model: "llama-3.3-70b-versatile",
-    temperature: 0.7,
-    max_tokens: 2000,
+  const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${apiKey}`,
+    },
+    body: JSON.stringify({
+      messages: [
+        { role: "system", content: AI_PROMPT_SYSTEM },
+        { role: "user", content: prompt },
+      ],
+      model: "llama-3.3-70b-versatile",
+      temperature: 0.7,
+      max_tokens: 2000,
+    }),
   });
 
-  const content = chat.choices[0]?.message?.content;
-  if (!content) throw new Error("Empty response");
+  if (!response.ok) {
+    const errText = await response.text().catch(() => "");
+    throw new Error(`Groq API error ${response.status}: ${errText.slice(0, 200)}`);
+  }
+
+  const data = await response.json();
+  const content = data.choices?.[0]?.message?.content;
+  if (!content) throw new Error("Empty response from Groq");
   return content;
 }
 
@@ -33,29 +43,33 @@ async function generateWithOpenRouter(prompt: string): Promise<string> {
   const apiKey = process.env.OPENROUTER_API_KEY;
   if (!apiKey) throw new Error("NO_KEY");
 
-  // OpenRouter uses OpenAI-compatible API
-  const OpenAI = (await import("openai")).default;
-  const client = new OpenAI({
-    baseURL: "https://openrouter.ai/api/v1",
-    apiKey: apiKey,
-    defaultHeaders: {
+  const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${apiKey}`,
       "HTTP-Referer": "https://sada-elaqar.vercel.app",
       "X-Title": "صدى العقار",
     },
+    body: JSON.stringify({
+      model: "deepseek/deepseek-chat-v3-0324:free",
+      messages: [
+        { role: "system", content: AI_PROMPT_SYSTEM },
+        { role: "user", content: prompt },
+      ],
+      temperature: 0.7,
+      max_tokens: 2000,
+    }),
   });
 
-  const chat = await client.chat.completions.create({
-    model: "deepseek/deepseek-chat-v3-0324:free",
-    messages: [
-      { role: "system", content: AI_PROMPT_SYSTEM },
-      { role: "user", content: prompt },
-    ],
-    temperature: 0.7,
-    max_tokens: 2000,
-  });
+  if (!response.ok) {
+    const errText = await response.text().catch(() => "");
+    throw new Error(`OpenRouter API error ${response.status}: ${errText.slice(0, 200)}`);
+  }
 
-  const content = chat.choices[0]?.message?.content;
-  if (!content) throw new Error("Empty response");
+  const data = await response.json();
+  const content = data.choices?.[0]?.message?.content;
+  if (!content) throw new Error("Empty response from OpenRouter");
   return content;
 }
 
@@ -63,28 +77,47 @@ async function generateWithGemini(prompt: string): Promise<string> {
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) throw new Error("NO_KEY");
 
-  const { GoogleGenerativeAI } = await import("@google/generative-ai");
-  const genAI = new GoogleGenerativeAI(apiKey);
-  const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
-  const result = await model.generateContent(prompt);
-  const text = result.response.text();
-  if (!text) throw new Error("Empty response");
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+  const response = await fetch(url, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      contents: [{ parts: [{ text: `${AI_PROMPT_SYSTEM}\n\n${prompt}` }] }],
+      generationConfig: {
+        temperature: 0.7,
+        maxOutputTokens: 2000,
+      },
+    }),
+  });
+
+  if (!response.ok) {
+    const errText = await response.text().catch(() => "");
+    throw new Error(`Gemini API error ${response.status}: ${errText.slice(0, 200)}`);
+  }
+
+  const data = await response.json();
+  const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
+  if (!text) throw new Error("Empty response from Gemini");
   return text;
 }
 
 async function generateWithZai(prompt: string): Promise<string> {
-  const ZAI = (await import("z-ai-web-dev-sdk")).default;
-  const zai = await ZAI.create();
-  const completion = await zai.chat.completions.create({
-    messages: [
-      { role: "assistant", content: AI_PROMPT_SYSTEM },
-      { role: "user", content: prompt },
-    ],
-    thinking: { type: "disabled" },
-  });
-  const content = completion.choices[0]?.message?.content;
-  if (!content) throw new Error("Empty response");
-  return content;
+  try {
+    const ZAI = (await import("z-ai-web-dev-sdk")).default;
+    const zai = await ZAI.create();
+    const completion = await zai.chat.completions.create({
+      messages: [
+        { role: "assistant", content: AI_PROMPT_SYSTEM },
+        { role: "user", content: prompt },
+      ],
+      thinking: { type: "disabled" },
+    });
+    const content = completion.choices[0]?.message?.content;
+    if (!content) throw new Error("Empty response");
+    return content;
+  } catch {
+    throw new Error("z-ai unavailable");
+  }
 }
 
 type ProviderFn = (prompt: string) => Promise<string>;
@@ -106,7 +139,7 @@ function getProviders(): Provider[] {
   if (process.env.GEMINI_API_KEY) {
     providers.push({ name: "Gemini", fn: generateWithGemini });
   }
-  // z-ai always available as last resort
+  // z-ai as last resort (may not work on all platforms)
   providers.push({ name: "z-ai", fn: generateWithZai });
 
   return providers;
@@ -131,7 +164,7 @@ async function generateContent(prompt: string): Promise<string> {
   throw new Error(`All AI providers failed: ${errors.join(" | ")}`);
 }
 
-// ─── Invisible Smart Rate Limiting ──────────────────────────
+// ─── Invisible Smart Rate Limiting (In-Memory) ─────────────
 const GLOBAL_DAILY_SOFT_LIMIT = 80;
 const GLOBAL_DAILY_HARD_LIMIT = 150;
 const PER_IP_DAILY_LIMIT = 3;
@@ -286,22 +319,26 @@ ${extras ? `- تفاصيل إضافية: ${extras}` : ""}
     dailyCount++;
     incrementIpCount(ip);
 
+    // Try to save to DB (non-critical, works locally)
     try {
-      await db.titleGeneration.create({
-        data: {
-          propType,
-          purpose,
-          city,
-          area: area || null,
-          space: space || null,
-          rooms: rooms || null,
-          feature: feature || null,
-          price: price || null,
-          results: JSON.stringify(parsed.titles),
-        },
-      });
+      const { db } = await import("@/lib/db");
+      if (db) {
+        await db.titleGeneration.create({
+          data: {
+            propType,
+            purpose,
+            city,
+            area: area || null,
+            space: space || null,
+            rooms: rooms || null,
+            feature: feature || null,
+            price: price || null,
+            results: JSON.stringify(parsed.titles),
+          },
+        });
+      }
     } catch (dbError) {
-      console.error("DB save error:", dbError);
+      console.error("DB save error (non-critical):", dbError);
     }
 
     const remaining = Math.max(0, PER_IP_DAILY_LIMIT - getIpCount(ip));
