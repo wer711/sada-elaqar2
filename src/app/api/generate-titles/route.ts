@@ -2,10 +2,10 @@ import { NextRequest, NextResponse } from "next/server";
 
 // ─── Multi-Provider AI System (Vercel-Compatible) ───────────
 // Tries providers in order until one works
-// Groq → OpenRouter → Gemini
+// Groq → OpenRouter → Gemini → z-ai
 // No SQLite dependency - works on serverless
 
-const AI_PROMPT_SYSTEM = "أنت مساعد تسويق عقاري محترف. أجب فقط بصيغة JSON كما هو مطلوب بدون أي نص إضافي.";
+const AI_PROMPT_SYSTEM = `أنت خبير تسويق عقاري محترف ومستشار رقمي. أجب فقط بصيغة JSON كما هو مطلوب بدون أي نص إضافي أو markdown.`;
 
 async function generateWithGroq(prompt: string): Promise<string> {
   const apiKey = process.env.GROQ_API_KEY;
@@ -23,8 +23,8 @@ async function generateWithGroq(prompt: string): Promise<string> {
         { role: "user", content: prompt },
       ],
       model: "llama-3.3-70b-versatile",
-      temperature: 0.7,
-      max_tokens: 2000,
+      temperature: 0.85,
+      max_tokens: 3000,
     }),
   });
 
@@ -57,8 +57,8 @@ async function generateWithOpenRouter(prompt: string): Promise<string> {
         { role: "system", content: AI_PROMPT_SYSTEM },
         { role: "user", content: prompt },
       ],
-      temperature: 0.7,
-      max_tokens: 2000,
+      temperature: 0.85,
+      max_tokens: 3000,
     }),
   });
 
@@ -84,8 +84,8 @@ async function generateWithGemini(prompt: string): Promise<string> {
     body: JSON.stringify({
       contents: [{ parts: [{ text: `${AI_PROMPT_SYSTEM}\n\n${prompt}` }] }],
       generationConfig: {
-        temperature: 0.7,
-        maxOutputTokens: 2000,
+        temperature: 0.85,
+        maxOutputTokens: 3000,
       },
     }),
   });
@@ -165,13 +165,18 @@ async function generateContent(prompt: string): Promise<string> {
 }
 
 // ─── Invisible Smart Rate Limiting (In-Memory) ─────────────
-const GLOBAL_DAILY_SOFT_LIMIT = 80;
-const GLOBAL_DAILY_HARD_LIMIT = 150;
-const PER_IP_DAILY_LIMIT = 3;
+// The user NEVER sees "limit" or "remaining" — only natural delays
+// and friendly messages when the server is "busy"
+
+const PER_IP_DAILY_SOFT = 3;   // After this: add progressive delay
+const PER_IP_DAILY_HARD = 6;   // After this: soft busy message (no "limit" word)
+const GLOBAL_DAILY_SOFT = 80;  // Progressive delay after this
+const GLOBAL_DAILY_HARD = 200; // Hard busy message after this
 
 let dailyCount = 0;
 let dailyCountDate = new Date().toISOString().slice(0, 10);
 const ipCounts = new Map<string, { count: number; date: string }>();
+const recentRequests = new Map<string, number>(); // IP -> last request timestamp
 
 function getToday(): string {
   return new Date().toISOString().slice(0, 10);
@@ -211,32 +216,60 @@ export async function POST(req: NextRequest) {
       || "unknown";
 
     const ipUsage = getIpCount(ip);
-    if (ipUsage >= PER_IP_DAILY_LIMIT) {
-      return NextResponse.json(
-        {
-          error: "limit_reached",
-          message: "لقد استخدمت حدودك اليومية من الأداة المجانية. جرّب النسخة الكاملة بدون حدود!",
-          redirect: "https://sada-elaqar.vercel.app",
-        },
-        { status: 429 }
-      );
-    }
 
-    if (dailyCount >= GLOBAL_DAILY_HARD_LIMIT) {
-      return NextResponse.json(
-        {
-          error: "daily_limit",
-          message: "تم الوصول للحد اليومي للأداة المجانية. النسخة الكاملة متاحة دائماً!",
-          redirect: "https://sada-elaqar.vercel.app",
-        },
-        { status: 429 }
-      );
-    }
-
-    if (dailyCount >= GLOBAL_DAILY_SOFT_LIMIT) {
-      const overSoft = dailyCount - GLOBAL_DAILY_SOFT_LIMIT;
-      const delayMs = Math.min(overSoft * 500, 5000);
+    // ── Invisible progressive delay (soft limit) ──
+    if (ipUsage >= PER_IP_DAILY_SOFT && ipUsage < PER_IP_DAILY_HARD) {
+      // Add natural-feeling delay that increases with each request
+      const delayMs = Math.min((ipUsage - PER_IP_DAILY_SOFT + 1) * 2000, 10000);
       await new Promise((resolve) => setTimeout(resolve, delayMs));
+    }
+
+    // ── Hard limit: friendly "busy" message (no mention of limits) ──
+    if (ipUsage >= PER_IP_DAILY_HARD) {
+      // Check if enough time has passed since last request (2 hour cooldown)
+      const lastReq = recentRequests.get(ip) || 0;
+      const hoursSinceLastReq = (Date.now() - lastReq) / (1000 * 60 * 60);
+      
+      if (hoursSinceLastReq < 2) {
+        return NextResponse.json(
+          {
+            titles: [],
+            marketingTips: [],
+            message: "الخادم مشغول الآن بطلبات كثيرة 🔄 جرب بعد قليل وستحصل على نتيجة ممتازة!",
+          },
+          { status: 200 } // Return 200 so frontend treats it as success with a message
+        );
+      }
+      // After 2 hours, allow one more try with heavy delay
+      await new Promise((resolve) => setTimeout(resolve, 8000));
+    }
+
+    // ── Global soft limit: progressive delay ──
+    if (dailyCount >= GLOBAL_DAILY_SOFT && dailyCount < GLOBAL_DAILY_HARD) {
+      const overSoft = dailyCount - GLOBAL_DAILY_SOFT;
+      const delayMs = Math.min(overSoft * 500, 8000);
+      await new Promise((resolve) => setTimeout(resolve, delayMs));
+    }
+
+    // ── Global hard limit ──
+    if (dailyCount >= GLOBAL_DAILY_HARD) {
+      return NextResponse.json(
+        {
+          titles: [],
+          marketingTips: [],
+          message: "الخادم يتعامل مع طلبات كثيرة حالياً 🔄 جرب بعد قليل!",
+        },
+        { status: 200 }
+      );
+    }
+
+    // Track last request time for this IP
+    recentRequests.set(ip, Date.now());
+
+    // Clean up old entries from recentRequests (older than 3 hours)
+    const threeHoursAgo = Date.now() - 3 * 60 * 60 * 1000;
+    for (const [key, val] of recentRequests.entries()) {
+      if (val < threeHoursAgo) recentRequests.delete(key);
     }
 
     const body = await req.json();
@@ -259,54 +292,140 @@ export async function POST(req: NextRequest) {
       .filter(Boolean)
       .join("، ");
 
-    const prompt = `أنت خبير في التسويق العقاري للسوق العربي والخليجي.
+    // ─── IMPROVED PROMPT: Professional, diverse, with marketing tips ───
+    const prompt = `أنت أستاذ في التسويق العقاري العربي بخبرة 15 سنة. أنت تكتب عناوين تسويقية توقف المتصفح وتجعله يضغط فوراً.
 
 بيانات العقار:
 - النوع: ${propType}
 - الغرض: ${purpose}
 - المدينة: ${city}
-${extras ? `- تفاصيل إضافية: ${extras}` : ""}
+${extras ? `- تفاصيل: ${extras}` : ""}
 
-المطلوب: اكتب بالضبط 6 عناوين تسويقية جذابة وقوية لهذا العقار، كل عنوان مخصص لمنصة مختلفة.
+المطلوب بالضبط:
+1. اكتب 6 عناوين تسويقية مذهلة ومختلفة كلياً عن بعضها، كل واحد مخصص لمنصة مختلفة.
+2. كل عنوان يجب أن يكون فريداً في أسلوبه وطريقته — لا تكرر نفس الكلمات أو التراكيب بين العناوين.
+3. أضف نصيحة تسويقية قصيرة ومحددة لكل منصة (كيف تنشر بطريقة تحقق أقصى تفاعل).
+4. أضف هاشتاجات مناسبة لكل منصة (3-5 هاشتاجات).
+
+قواعد الذهب:
+- كل عنوان يجب أن يثير فضول أو رغبة أو إحساس بالفرصة — لا عناوين عامة أو مملة.
+- استخدم تقنيات نفسية: الندرة ("فرصة أخيرة")، السلطة ("الأكثر طلباً")، الاجتماعي ("الجميع يبحث عن")، الفضول ("لن تصدق").
+- غيّر أسلوب الكتابة بين العناوين: واحد سؤال، واحد تعجبي، واحد سردي، واحد مع أرقام، واحد عاطفي، واحد مباشر.
+- لا تستخدم كلمات إنجليزية أبداً.
+- راعِ لهجة المدينة المناسبة.
 
 أجب فقط بهذا الـ JSON بدون أي كلام إضافي أو backticks:
 {
   "titles": [
-    {"platform": "واتساب", "title": "..."},
-    {"platform": "إنستغرام", "title": "..."},
-    {"platform": "تويتر / X", "title": "..."},
-    {"platform": "فيسبوك", "title": "..."},
-    {"platform": "سناب شات", "title": "..."},
-    {"platform": "لينكدإن", "title": "..."}
+    {
+      "platform": "واتساب",
+      "title": "...",
+      "tip": "نصيحة نشر قصيرة ومحددة",
+      "hashtags": ["هاشتاق1", "هاشتاق2", "هاشتاق3"]
+    },
+    {
+      "platform": "إنستغرام",
+      "title": "...",
+      "tip": "نصيحة نشر قصيرة ومحددة",
+      "hashtags": ["هاشتاق1", "هاشتاق2", "هاشتاق3", "هاشتاق4"]
+    },
+    {
+      "platform": "تويتر / X",
+      "title": "...",
+      "tip": "نصيحة نشر قصيرة ومحددة",
+      "hashtags": ["هاشتاق1", "هاشتاق2"]
+    },
+    {
+      "platform": "فيسبوك",
+      "title": "...",
+      "tip": "نصيحة نشر قصيرة ومحددة",
+      "hashtags": ["هاشتاق1", "هاشتاق2", "هاشتاق3"]
+    },
+    {
+      "platform": "سناب شات",
+      "title": "...",
+      "tip": "نصيحة نشر قصيرة ومحددة",
+      "hashtags": ["هاشتاق1", "هاشتاق2"]
+    },
+    {
+      "platform": "لينكدإن",
+      "title": "...",
+      "tip": "نصيحة نشر قصيرة ومحددة",
+      "hashtags": ["هاشتاق1", "هاشتاق2", "هاشتاق3"]
+    }
+  ],
+  "generalTips": [
+    "نصيحة عامة 1 للتسويق العقاري",
+    "نصيحة عامة 2",
+    "نصيحة عامة 3"
   ]
 }
 
-قواعد كل عنوان:
-- واتساب: تفصيلي وودود، يذكر المميزات والموقع، ينتهي بدعوة للتواصل (لا يتجاوز 3 أسطر)
-- إنستغرام: جذاب ومشاعري، يستخدم نقاط وإيموجي مناسبة، قصير وقوي
-- تويتر/X: مباشر وصادم، لا يتجاوز 200 حرف، يثير الفضول
-- فيسبوك: تفصيلي وموثوق، يعرض المميزات والسعر بوضوح، لغة ودية وعائلية
-- سناب شات: شبابي وسريع، يستخدم إيموجي كثيرة، قصير جداً ومثير للفضول
-- لينكدإن: احترافي واستثماري، يركز على العائد والقيمة، لغة أعمال
-
-اكتب بلهجة عربية فصيحة مناسبة لمدينة ${city}. لا تستخدم كلمات إنجليزية.`;
+تفاصيل كل منصة:
+- واتساب: عنوان تفصيلي وودود كأنك ترسله لصديق، يذكر أفضل 3 مميزات، ينتهي بدعوة للتواصل مع رقم (لا يتجاوز 3 أسطر)
+- إنستغرام: عنوان مشاعري جذاب يستخدم إيموجي مناسبة (2-3 فقط)، قصير وقوي، يركز على الحلم والمشاعر
+- تويتر/X: عنوان صادم يثير الفضول فوراً، لا يتجاوز 180 حرف، مباشر وواضح
+- فيسبوك: عنوان قصصي يعرض المميزات بأسلوب عائلي ودود، يذكر السعر إذا كان مميزاً
+- سناب شات: عنوان شبابي سريع جداً، إيموجي كثيرة، مثير للفضول بأسلوب تشويقي
+- لينكدإن: عنوان احترافي استثماري، يركز على العائد والفرصة والقيمة، لغة أعمال رسمية`;
 
     const text = await generateContent(prompt);
 
     let parsed;
     try {
-      const clean = text.replace(/```json|```/g, "").trim();
+      // Step 1: Remove markdown code blocks
+      let clean = text.replace(/```json|```/g, "").trim();
+      
+      // Step 2: Remove any leading/trailing non-JSON text
+      const jsonStart = clean.indexOf('{');
+      const jsonEnd = clean.lastIndexOf('}');
+      if (jsonStart !== -1 && jsonEnd !== -1 && jsonEnd > jsonStart) {
+        clean = clean.substring(jsonStart, jsonEnd + 1);
+      }
+      
+      // Step 3: Fix common AI JSON issues
+      // Remove trailing commas before } or ]
+      clean = clean.replace(/,\s*([}\]])/g, '$1');
+      // Fix unescaped quotes in strings (basic)
+      // Fix single quotes to double quotes
+      clean = clean.replace(/'/g, '"');
+      
       parsed = JSON.parse(clean);
     } catch {
+      // Step 4: Try regex extraction as fallback
       const jsonMatch = text.match(/\{[\s\S]*"titles"[\s\S]*\}/);
       if (jsonMatch) {
         try {
-          parsed = JSON.parse(jsonMatch[0]);
+          let extracted = jsonMatch[0];
+          // Fix trailing commas
+          extracted = extracted.replace(/,\s*([}\]])/g, '$1');
+          parsed = JSON.parse(extracted);
         } catch {
-          return NextResponse.json(
-            { error: "تعذّر تحليل الاستجابة، حاول مرة أخرى" },
-            { status: 500 }
-          );
+          // Step 5: Last resort - try to extract titles manually
+          try {
+            const titleMatches = [...text.matchAll(/"platform"\s*:\s*"([^"]+)"\s*,\s*"title"\s*:\s*"([^"]+)"/g)];
+            if (titleMatches.length > 0) {
+              parsed = {
+                titles: titleMatches.map(m => ({
+                  platform: m[1],
+                  title: m[2],
+                  tip: "",
+                  hashtags: [],
+                })),
+                generalTips: [],
+              };
+            } else {
+              return NextResponse.json(
+                { error: "تعذّر تحليل الاستجابة، حاول مرة أخرى" },
+                { status: 500 }
+              );
+            }
+          } catch {
+            return NextResponse.json(
+              { error: "تعذّر تحليل الاستجابة، حاول مرة أخرى" },
+              { status: 500 }
+            );
+          }
         }
       } else {
         return NextResponse.json(
@@ -341,11 +460,10 @@ ${extras ? `- تفاصيل إضافية: ${extras}` : ""}
       console.error("DB save error (non-critical):", dbError);
     }
 
-    const remaining = Math.max(0, PER_IP_DAILY_LIMIT - getIpCount(ip));
-
+    // NEVER expose remaining count to the client
     return NextResponse.json({
       titles: parsed.titles,
-      _meta: { remaining },
+      generalTips: parsed.generalTips || [],
     });
   } catch (error) {
     console.error("Generation error:", error);

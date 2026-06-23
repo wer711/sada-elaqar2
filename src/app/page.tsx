@@ -27,12 +27,23 @@ import {
   Frown,
   PartyPopper,
   Lightbulb,
+  Share2,
+  Twitter,
+  Link2,
+  Send,
+  Target,
+  Rocket,
+  ThumbsUp,
+  Hash,
+  Megaphone,
 } from "lucide-react";
 
 // ─── Types ─────────────────────────────────────────────────
 interface TitleResult {
   platform: string;
   title: string;
+  tip?: string;
+  hashtags?: string[];
 }
 
 interface FormData {
@@ -48,6 +59,7 @@ interface FormData {
 
 // ─── Tracking Helper ────────────────────────────────────────
 const MAIN_CTA_BASE = "https://sada-elaqar.vercel.app";
+const TOOL_URL = "https://sada-elaqar26.vercel.app";
 
 function getUtmParams(): Record<string, string> {
   if (typeof window === "undefined") return {};
@@ -63,7 +75,6 @@ function getUtmParams(): Record<string, string> {
 function trackedUrl(path: string, utmContent: string): string {
   const utm = getUtmParams();
   const url = new URL(path, MAIN_CTA_BASE);
-  // Always add our own tracking
   url.searchParams.set("utm_source", utm.utm_source || "title-tool");
   url.searchParams.set("utm_medium", utm.utm_medium || "free-tool");
   url.searchParams.set("utm_campaign", utm.utm_campaign || "landing");
@@ -72,7 +83,6 @@ function trackedUrl(path: string, utmContent: string): string {
 }
 
 function trackEvent(event: string, data?: Record<string, string>) {
-  // Fire-and-forget tracking via /api/track endpoint
   const utm = getUtmParams();
   fetch("/api/track", {
     method: "POST",
@@ -106,6 +116,13 @@ const PLATFORM_TEXT_DARK: Record<string, boolean> = {
   "سناب شات": true,
 };
 
+const PLATFORM_SHARE_URLS: Record<string, (text: string) => string> = {
+  واتساب: (text) => `https://wa.me/?text=${encodeURIComponent(text)}`,
+  "تويتر / X": (text) => `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}`,
+  فيسبوك: (text) => `https://www.facebook.com/sharer/sharer.php?quote=${encodeURIComponent(text)}`,
+  لينكدإن: (text) => `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(TOOL_URL)}`,
+};
+
 // ─── Pain → Solution Flow ──────────────────────────────────
 const PAIN_SECTIONS = [
   {
@@ -129,7 +146,7 @@ const PAIN_SECTIONS = [
 const BEFORE_AFTER = [
   { label: "كتابة وصف عقار", before: "45 دقيقة", after: "7 ثوانٍ" },
   { label: "تكييف لكل منصة", before: "إعادة كتابة 6 مرات", after: "تلقائي" },
-  { label: "اختيار هاشتاجات", before: "بحث يدوي", after: "ذكي ومدروس" },
+  { label: "اختيار هاشتاقات", before: "بحث يدوي", after: "ذكي ومدروس" },
   { label: "التكلفة الشهرية", before: "$500+ وكالة", after: "مجاناً" },
 ];
 
@@ -268,15 +285,41 @@ function useCountdown() {
   return timeLeft;
 }
 
+// ─── Share Helpers ─────────────────────────────────────────
+function shareOnWhatsApp(text: string) {
+  window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank");
+}
+
+function shareOnTwitter(text: string) {
+  window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}`, "_blank");
+}
+
+function shareOnLinkedIn() {
+  window.open(`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(TOOL_URL)}`, "_blank");
+}
+
+async function copyToClipboard(text: string): Promise<boolean> {
+  try {
+    await navigator.clipboard.writeText(text);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 // ─── Main Page ─────────────────────────────────────────────
 export default function SadaLandingPage() {
   const [formStep, setFormStep] = useState<"form" | "loading" | "results">("form");
   const [formData, setFormData] = useState<FormData>(INITIAL_FORM);
   const [titles, setTitles] = useState<TitleResult[]>([]);
+  const [generalTips, setGeneralTips] = useState<string[]>([]);
   const [error, setError] = useState("");
   const [copiedIdx, setCopiedIdx] = useState<number | null>(null);
-  const [remainingUses, setRemainingUses] = useState<number | null>(null);
-  const [limitReached, setLimitReached] = useState(false);
+  const [copiedHashtags, setCopiedHashtags] = useState<number | null>(null);
+  const [sharedPlatform, setSharedPlatform] = useState<string | null>(null);
+  const [showShareTooltip, setShowShareTooltip] = useState<string | null>(null);
+  const [toolLinkCopied, setToolLinkCopied] = useState(false);
+  const [busyMessage, setBusyMessage] = useState("");
 
   const userCount = useUserCounter();
   const countdown = useCountdown();
@@ -304,16 +347,11 @@ export default function SadaLandingPage() {
 
   const handleGenerate = async () => {
     if (!validateForm()) return;
-    if (limitReached) {
-      trackEvent("click_limited_cta", { propType: formData.propType, city: formData.city });
-      window.open(trackedUrl("/", "limited-cta"), "_blank");
-      return;
-    }
 
     setFormStep("loading");
     setError("");
+    setBusyMessage("");
 
-    // Track generation attempt
     trackEvent("generate_attempt", { propType: formData.propType, city: formData.city });
 
     try {
@@ -326,22 +364,20 @@ export default function SadaLandingPage() {
 
       const data = await res.json();
 
-      if (res.status === 429) {
-        setLimitReached(true);
-        setError(data.message || "تم الوصول للحد اليومي");
+      // Handle busy message (invisible rate limit)
+      if (data.message && (!data.titles || data.titles.length === 0)) {
+        setBusyMessage(data.message);
         setFormStep("form");
-        trackEvent("rate_limit_hit", { city: formData.city });
+        trackEvent("busy_message_shown", { city: formData.city });
         return;
       }
 
-      if (!res.ok) {
+      if (!res.ok && data.error) {
         throw new Error(data.error || "حدث خطأ");
       }
 
-      setTitles(data.titles);
-      if (data._meta?.remaining !== undefined) {
-        setRemainingUses(data._meta.remaining);
-      }
+      setTitles(data.titles || []);
+      setGeneralTips(data.generalTips || []);
       setFormStep("results");
       trackEvent("generate_success", { propType: formData.propType, city: formData.city });
     } catch (err: unknown) {
@@ -351,25 +387,78 @@ export default function SadaLandingPage() {
     }
   };
 
-  const handleCopy = (text: string, idx: number) => {
-    navigator.clipboard.writeText(text);
-    setCopiedIdx(idx);
-    setTimeout(() => setCopiedIdx(null), 2200);
-    trackEvent("copy_title", { platform: titles[idx]?.platform || "" });
+  const handleCopy = async (text: string, idx: number) => {
+    const ok = await copyToClipboard(text);
+    if (ok) {
+      setCopiedIdx(idx);
+      setTimeout(() => setCopiedIdx(null), 2200);
+      trackEvent("copy_title", { platform: titles[idx]?.platform || "" });
+    }
+  };
+
+  const handleCopyHashtags = async (hashtags: string[], idx: number) => {
+    const text = hashtags.map(h => h.startsWith('#') ? h : `#${h}`).join(' ');
+    const ok = await copyToClipboard(text);
+    if (ok) {
+      setCopiedHashtags(idx);
+      setTimeout(() => setCopiedHashtags(null), 2200);
+      trackEvent("copy_hashtags", { platform: titles[idx]?.platform || "" });
+    }
+  };
+
+  const handleShareTitle = (platform: string, title: string, hashtags: string[] = []) => {
+    const fullText = hashtags.length > 0
+      ? `${title}\n\n${hashtags.map(h => h.startsWith('#') ? h : `#${h}`).join(' ')}`
+      : title;
+
+    if (platform === "واتساب") {
+      shareOnWhatsApp(fullText);
+    } else if (platform === "تويتر / X") {
+      shareOnTwitter(fullText);
+    } else {
+      copyToClipboard(fullText);
+    }
+
+    setSharedPlatform(platform);
+    setTimeout(() => setSharedPlatform(null), 2500);
+    trackEvent("share_title", { platform });
+    setShowShareTooltip(platform);
+    setTimeout(() => setShowShareTooltip(null), 2000);
+  };
+
+  const handleShareTool = (method: string) => {
+    const toolShareText = `🏠 جرّبت أداة مجانية تكتب عناوين تسويقية احترافية لأي عقار في 7 ثوانٍ!\n\n✅ 6 منصات مختلفة\n✅ نصائح نشر مجانية\n✅ هاشتاقات ذكية\n\nجرّبها مجاناً 👇\n${TOOL_URL}`;
+
+    if (method === "whatsapp") {
+      shareOnWhatsApp(toolShareText);
+    } else if (method === "twitter") {
+      shareOnTwitter(`🏠 أداة مجانية تكتب عناوين تسويقية احترافية لأي عقار في 7 ثوانٍ! جرّبها 👇\n${TOOL_URL}`);
+    } else if (method === "copy") {
+      copyToClipboard(toolShareText).then((ok) => {
+        if (ok) {
+          setToolLinkCopied(true);
+          setTimeout(() => setToolLinkCopied(false), 2500);
+        }
+      });
+    }
+
+    trackEvent("share_tool", { method });
   };
 
   const handleReset = () => {
     setFormData(INITIAL_FORM);
     setTitles([]);
+    setGeneralTips([]);
     setFormStep("form");
     setError("");
+    setBusyMessage("");
   };
 
   const countryCount = Object.keys(CITIES).length;
   const totalCities = Object.values(CITIES).reduce((a, b) => a + b.length, 0);
 
   return (
-    <div className="min-h-screen flex flex-col overflow-x-hidden">
+    <div className="min-h-screen flex flex-col overflow-x-hidden" dir="rtl">
       {/* ── HEADER ── */}
       <header className="bg-[#0f1117] px-4 sm:px-6 py-4 flex items-center justify-between sticky top-0 z-50">
         <a
@@ -438,7 +527,7 @@ export default function SadaLandingPage() {
             </div>
           </div>
 
-          {/* Hook Headline — Personal, emotional */}
+          {/* Hook Headline */}
           <h1 className="text-white text-2xl sm:text-4xl lg:text-5xl font-black leading-snug max-w-2xl mx-auto mb-4">
             عقارك يستاهل أفضل من
             <br />
@@ -447,7 +536,7 @@ export default function SadaLandingPage() {
 
           {/* Sub-hook */}
           <p className="text-white/50 text-base sm:text-lg max-w-xl mx-auto leading-relaxed mb-6">
-            جرّب الآن — أدخل بيانات عقارك واحصل على <span className="text-[#c9a84c] font-bold">6 عناوين تسويقية</span> مخصصة لكل منصة في 7 ثوانٍ فقط
+            جرّب الآن — أدخل بيانات عقارك واحصل على <span className="text-[#c9a84c] font-bold">عناوين تسويقية احترافية</span> مخصصة لكل منصة في 7 ثوانٍ فقط
           </p>
 
           {/* Trust badges */}
@@ -460,6 +549,9 @@ export default function SadaLandingPage() {
             </span>
             <span className="flex items-center gap-1.5">
               <Globe className="w-3.5 h-3.5 text-[#c9a84c]" /> {countryCount} دولة عربية
+            </span>
+            <span className="flex items-center gap-1.5">
+              <Sparkles className="w-3.5 h-3.5 text-[#c9a84c]" /> مجاني بالكامل
             </span>
           </div>
         </motion.div>
@@ -523,7 +615,7 @@ export default function SadaLandingPage() {
 
       {/* ── INTERACTIVE DEMO TOOL ── */}
       <section className="bg-[#f5f6fa] py-10 px-5" id="demo">
-        <div className="max-w-[680px] w-full mx-auto">
+        <div className="max-w-[720px] w-full mx-auto">
           <motion.div
             initial={{ opacity: 0 }}
             whileInView={{ opacity: 1 }}
@@ -537,7 +629,7 @@ export default function SadaLandingPage() {
             <h2 className="text-xl sm:text-2xl font-black text-[#0f1117] mb-2">
               شاهد النتيجة <span className="text-[#c9a84c]">بعينيك</span>
             </h2>
-            <p className="text-xs text-[#3a3d4a]">أدخل بيانات أي عقار واحصل على 6 عناوين تسويقية لمنصات مختلفة</p>
+            <p className="text-xs text-[#3a3d4a]">أدخل بيانات أي عقار واحصل على عناوين تسويقية احترافية لمنصات مختلفة</p>
           </motion.div>
 
           <motion.div
@@ -547,21 +639,19 @@ export default function SadaLandingPage() {
             viewport={{ once: true }}
           >
             {/* Card Header */}
-            <div className="bg-gradient-to-bl from-[#f5edda] to-[#fff8e8] border-b border-[#edddb0] px-6 py-4 flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-[#c9a84c] rounded-[10px] flex items-center justify-center flex-shrink-0">
-                  <Sparkles className="w-5 h-5 text-white" />
-                </div>
-                <div>
-                  <h3 className="text-sm font-bold text-[#0f1117]">مولّد العناوين العقارية</h3>
-                  <p className="text-[11px] text-[#3a3d4a]">بيانات العقار → 6 عناوين لمنصات مختلفة</p>
-                </div>
+            <div className="bg-gradient-to-bl from-[#f5edda] to-[#fff8e8] border-b border-[#edddb0] px-6 py-4 flex items-center gap-3">
+              <div className="w-10 h-10 bg-[#c9a84c] rounded-[10px] flex items-center justify-center flex-shrink-0">
+                <Sparkles className="w-5 h-5 text-white" />
               </div>
-              {remainingUses !== null && remainingUses > 0 && (
-                <span className="text-[10px] text-[#3a3d4a] bg-[#f5f6fa] px-2.5 py-1 rounded-full font-semibold">
-                  متبقي {remainingUses} محاولات اليوم
-                </span>
-              )}
+              <div className="flex-1">
+                <h3 className="text-sm font-bold text-[#0f1117]">مولّد العناوين العقارية</h3>
+                <p className="text-[11px] text-[#3a3d4a]">بيانات العقار → عناوين احترافية + نصائح نشر + هاشتاقات</p>
+              </div>
+              {/* NO remaining attempts counter - invisible rate limiting */}
+              <div className="flex items-center gap-1 text-[10px] text-[#0D7C66] bg-[#0D7C66]/10 px-2.5 py-1 rounded-full font-semibold">
+                <Zap className="w-3 h-3" />
+                مجاني
+              </div>
             </div>
 
             <AnimatePresence mode="wait">
@@ -716,32 +806,27 @@ export default function SadaLandingPage() {
                     </div>
                   </div>
 
+                  {/* Busy message (invisible rate limit) */}
+                  {busyMessage && (
+                    <motion.div
+                      initial={{ opacity: 0, y: -5 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="mt-4 rounded-xl px-4 py-3 text-sm text-center bg-[#c9a84c]/10 border border-[#c9a84c]/30 text-[#c9a84c]"
+                    >
+                      <span className="flex items-center justify-center gap-2">
+                        <Clock className="w-4 h-4" />
+                        {busyMessage}
+                      </span>
+                    </motion.div>
+                  )}
+
                   {error && (
                     <motion.div
                       initial={{ opacity: 0, y: -5 }}
                       animate={{ opacity: 1, y: 0 }}
-                      className={`mt-4 rounded-xl px-4 py-3 text-sm text-center ${
-                        limitReached
-                          ? "bg-[#c9a84c]/10 border border-[#c9a84c]/30 text-[#c9a84c]"
-                          : "bg-red-50 border border-red-200 text-red-700"
-                      }`}
+                      className="mt-4 rounded-xl px-4 py-3 text-sm text-center bg-red-50 border border-red-200 text-red-700"
                     >
-                      {limitReached ? (
-                        <span className="flex items-center justify-center gap-2">
-                          <AlertTriangle className="w-4 h-4" />
-                          {error}
-                          <a
-                            href={trackedUrl("/", "limited-inline")}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="underline font-bold"
-                          >
-                            جرّب النسخة الكاملة ←
-                          </a>
-                        </span>
-                      ) : (
-                        `⚠️ ${error}`
-                      )}
+                      ⚠️ {error}
                     </motion.div>
                   )}
 
@@ -750,7 +835,7 @@ export default function SadaLandingPage() {
                     className="w-full mt-6 bg-[#c9a84c] text-[#0f1117] font-black text-base py-4 rounded-[14px] cursor-pointer flex items-center justify-center gap-2.5 transition-all hover:-translate-y-0.5 hover:shadow-[0_8px_28px_rgba(201,168,76,0.45)] active:translate-y-0 shadow-[0_4px_20px_rgba(201,168,76,0.35)]"
                   >
                     <Zap className="w-5 h-5" />
-                    {limitReached ? "جرّب النسخة الكاملة — بدون حدود" : "أنشئ العناوين التسويقية الآن"}
+                    أنشئ العناوين التسويقية الآن
                   </button>
                 </motion.div>
               )}
@@ -762,11 +847,15 @@ export default function SadaLandingPage() {
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
-                  className="flex flex-col items-center py-12 px-5 gap-4"
+                  className="flex flex-col items-center py-14 px-5 gap-4"
                 >
-                  <div className="w-11 h-11 border-[3px] border-[#e2e4ed] border-t-[#c9a84c] rounded-full animate-spin" />
-                  <div className="text-[#3a3d4a] font-semibold text-sm">صدى العقار يكتب لك...</div>
-                  <div className="text-[#aaa] text-xs">يحلّل البيانات ويصيغ أفضل العناوين لكل منصة</div>
+                  <div className="w-12 h-12 border-[3px] border-[#e2e4ed] border-t-[#c9a84c] rounded-full animate-spin" />
+                  <div className="text-[#0f1117] font-bold text-sm">صدى العقار يصيغ لك عناوين احترافية...</div>
+                  <div className="text-[#aaa] text-xs">يحلّل بيانات العقار ويختار أفضل الأساليب لكل منصة</div>
+                  <div className="flex items-center gap-2 text-[10px] text-[#c9a84c] mt-2">
+                    <Target className="w-3.5 h-3.5" />
+                    <span>يستخدم تقنيات نفسية مثبتة لجذب المشترين</span>
+                  </div>
                 </motion.div>
               )}
 
@@ -777,62 +866,216 @@ export default function SadaLandingPage() {
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
-                  className="p-6"
+                  className="p-5 sm:p-6"
                 >
-                  <div className="flex items-center gap-2 mb-4">
-                    <span className="text-xs font-bold text-[#c9a84c] tracking-wider uppercase">
-                      العناوين التسويقية الجاهزة
-                    </span>
+                  {/* Success header */}
+                  <div className="flex items-center gap-2 mb-5">
+                    <div className="w-7 h-7 bg-[#0D7C66] rounded-full flex items-center justify-center flex-shrink-0">
+                      <Check className="w-4 h-4 text-white" />
+                    </div>
+                    <span className="text-sm font-black text-[#0D7C66]">تم توليد العناوين بنجاح!</span>
                     <span className="flex-1 h-px bg-[#edddb0]" />
                   </div>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {/* Title cards */}
+                  <div className="flex flex-col gap-3">
                     {titles.map((item, idx) => (
                       <motion.div
                         key={idx}
                         initial={{ opacity: 0, x: 20 }}
                         animate={{ opacity: 1, x: 0 }}
                         transition={{ delay: idx * 0.08 }}
-                        onClick={() => handleCopy(item.title, idx)}
-                        className={`relative bg-[#f5f6fa] border-[1.5px] rounded-[14px] p-4 cursor-pointer transition-all hover:border-[#c9a84c] hover:shadow-[0_0_0_3px_rgba(201,168,76,0.18)] ${
+                        className={`bg-[#f5f6fa] border-[1.5px] rounded-[14px] p-4 transition-all ${
                           copiedIdx === idx
                             ? "border-green-400 shadow-[0_0_0_3px_rgba(34,197,94,0.15)]"
-                            : "border-[#e2e4ed]"
+                            : "border-[#e2e4ed] hover:border-[#c9a84c]"
                         }`}
                       >
-                        <span
-                          className="inline-block text-[10px] font-bold rounded-md px-2.5 py-1 mb-2.5"
-                          style={{
-                            background: PLATFORM_COLORS[item.platform] || "#333",
-                            color: PLATFORM_TEXT_DARK[item.platform] ? "#333" : "#fff",
-                          }}
-                        >
-                          {item.platform}
-                        </span>
-                        <div className="text-sm font-bold text-[#0f1117] leading-relaxed">
+                        {/* Platform badge + copy button row */}
+                        <div className="flex items-center justify-between mb-2.5">
+                          <span
+                            className="inline-block text-[10px] font-bold rounded-md px-2.5 py-1"
+                            style={{
+                              background: PLATFORM_COLORS[item.platform] || "#333",
+                              color: PLATFORM_TEXT_DARK[item.platform] ? "#333" : "#fff",
+                            }}
+                          >
+                            {item.platform}
+                          </span>
+                          <button
+                            onClick={() => handleCopy(item.title, idx)}
+                            className="flex items-center gap-1 text-[10px] cursor-pointer bg-transparent border-none"
+                          >
+                            {copiedIdx === idx ? (
+                              <span className="text-green-500 font-bold flex items-center gap-1">
+                                <Check className="w-3.5 h-3.5" /> تم النسخ
+                              </span>
+                            ) : (
+                              <span className="text-[#aaa] flex items-center gap-1 hover:text-[#c9a84c] transition-colors">
+                                <Copy className="w-3.5 h-3.5" /> انقر للنسخ
+                              </span>
+                            )}
+                          </button>
+                        </div>
+
+                        {/* Title text */}
+                        <div className="text-sm font-bold text-[#0f1117] leading-relaxed mb-2">
                           {item.title}
                         </div>
-                        <div className="absolute left-3.5 top-3.5 flex items-center gap-1 text-[#aaa] text-[10px]">
-                          {copiedIdx === idx ? (
-                            <span className="text-green-500 font-bold flex items-center gap-1">
-                              <Check className="w-3.5 h-3.5" /> تم النسخ
-                            </span>
-                          ) : (
-                            <span className="flex items-center gap-1">
-                              <Copy className="w-3.5 h-3.5" /> انقر للنسخ
-                            </span>
+
+                        {/* Hashtags */}
+                        {item.hashtags && item.hashtags.length > 0 && (
+                          <div className="flex items-center gap-1.5 flex-wrap mb-2">
+                            <Hash className="w-3 h-3 text-[#c9a84c] flex-shrink-0" />
+                            {item.hashtags.map((tag, tIdx) => (
+                              <span
+                                key={tIdx}
+                                className="text-[10px] text-[#c9a84c] bg-[#c9a84c]/10 px-2 py-0.5 rounded-full font-semibold"
+                              >
+                                {tag.startsWith('#') ? tag : `#${tag}`}
+                              </span>
+                            ))}
+                            <button
+                              onClick={() => handleCopyHashtags(item.hashtags || [], idx)}
+                              className="text-[9px] text-[#aaa] hover:text-[#c9a84c] cursor-pointer bg-transparent border-none transition-colors mr-1"
+                              title="نسخ الهاشتاقات"
+                            >
+                              {copiedHashtags === idx ? (
+                                <span className="text-green-500">✓</span>
+                              ) : (
+                                <Copy className="w-2.5 h-2.5" />
+                              )}
+                            </button>
+                          </div>
+                        )}
+
+                        {/* Tip */}
+                        {item.tip && (
+                          <div className="flex items-start gap-2 bg-[#0D7C66]/5 rounded-lg px-3 py-2 mt-1">
+                            <Lightbulb className="w-3.5 h-3.5 text-[#0D7C66] mt-0.5 flex-shrink-0" />
+                            <span className="text-[11px] text-[#0D7C66] leading-relaxed">{item.tip}</span>
+                          </div>
+                        )}
+
+                        {/* Share buttons for this title */}
+                        <div className="flex items-center gap-2 mt-3 pt-3 border-t border-[#e2e4ed]">
+                          <span className="text-[10px] text-[#aaa] ml-1">مشاركة:</span>
+                          <button
+                            onClick={() => handleShareTitle("واتساب", item.title, item.hashtags)}
+                            className="flex items-center gap-1 bg-[#25D366] text-white text-[10px] font-bold px-3 py-1.5 rounded-lg cursor-pointer hover:opacity-90 transition-opacity border-none"
+                          >
+                            <Send className="w-3 h-3" />
+                            واتساب
+                          </button>
+                          {(item.platform === "تويتر / X" || item.platform === "إنستغرام") && (
+                            <button
+                              onClick={() => handleShareTitle("تويتر / X", item.title, item.hashtags)}
+                              className="flex items-center gap-1 bg-[#000] text-white text-[10px] font-bold px-3 py-1.5 rounded-lg cursor-pointer hover:opacity-90 transition-opacity border-none"
+                            >
+                              <Twitter className="w-3 h-3" />
+                              تويتر
+                            </button>
                           )}
+                          <button
+                            onClick={() => {
+                              const fullText = item.hashtags?.length
+                                ? `${item.title}\n${item.hashtags.map(h => h.startsWith('#') ? h : `#${h}`).join(' ')}`
+                                : item.title;
+                              copyToClipboard(fullText).then(() => {
+                                setCopiedIdx(idx);
+                                setTimeout(() => setCopiedIdx(null), 2000);
+                              });
+                            }}
+                            className="flex items-center gap-1 bg-[#f5f6fa] border border-[#e2e4ed] text-[#3a3d4a] text-[10px] font-bold px-3 py-1.5 rounded-lg cursor-pointer hover:border-[#c9a84c] transition-colors"
+                          >
+                            <Link2 className="w-3 h-3" />
+                            نسخ الكل
+                          </button>
                         </div>
                       </motion.div>
                     ))}
                   </div>
 
+                  {/* General Marketing Tips */}
+                  {generalTips.length > 0 && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.4 }}
+                      className="mt-5 bg-gradient-to-bl from-[#f5edda] to-[#fff8e8] border border-[#edddb0] rounded-2xl p-5"
+                    >
+                      <div className="flex items-center gap-2 mb-3">
+                        <Megaphone className="w-5 h-5 text-[#c9a84c]" />
+                        <h4 className="text-sm font-black text-[#0f1117]">نصائح تسويقية مجانية</h4>
+                      </div>
+                      <div className="flex flex-col gap-2">
+                        {generalTips.map((tip, idx) => (
+                          <div key={idx} className="flex items-start gap-2">
+                            <ThumbsUp className="w-3.5 h-3.5 text-[#c9a84c] mt-0.5 flex-shrink-0" />
+                            <span className="text-xs text-[#3a3d4a] leading-relaxed">{tip}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </motion.div>
+                  )}
+
+                  {/* ── VIRAL: Share the tool section ── */}
+                  <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.6 }}
+                    className="mt-5 bg-[#0f1117] rounded-2xl p-5 text-center relative overflow-hidden"
+                  >
+                    <div className="absolute top-[-20px] right-[-20px] w-[80px] h-[80px] bg-[rgba(201,168,76,0.15)] rounded-full pointer-events-none" />
+                    <div className="relative z-10">
+                      <div className="flex items-center justify-center gap-2 mb-2">
+                        <Rocket className="w-5 h-5 text-[#c9a84c]" />
+                        <h4 className="text-white text-sm font-extrabold">ساعد زملاءك — شارك الأداة!</h4>
+                      </div>
+                      <p className="text-white/40 text-[11px] leading-relaxed mb-4 max-w-sm mx-auto">
+                        أغلب وكلاء العقارات لا يعرفون عن هذه الأداة بعد. شاركها وساعدهم يوفّرون وقتهم
+                      </p>
+                      <div className="flex flex-wrap justify-center gap-2">
+                        <button
+                          onClick={() => handleShareTool("whatsapp")}
+                          className="flex items-center gap-1.5 bg-[#25D366] text-white text-xs font-bold px-5 py-2.5 rounded-xl cursor-pointer hover:opacity-90 transition-opacity border-none min-h-[40px]"
+                        >
+                          <MessageCircle className="w-4 h-4" />
+                          واتساب
+                        </button>
+                        <button
+                          onClick={() => handleShareTool("twitter")}
+                          className="flex items-center gap-1.5 bg-[#1DA1F2] text-white text-xs font-bold px-5 py-2.5 rounded-xl cursor-pointer hover:opacity-90 transition-opacity border-none min-h-[40px]"
+                        >
+                          <Twitter className="w-4 h-4" />
+                          تويتر
+                        </button>
+                        <button
+                          onClick={() => handleShareTool("copy")}
+                          className="flex items-center gap-1.5 bg-white/10 text-white text-xs font-bold px-5 py-2.5 rounded-xl cursor-pointer hover:bg-white/20 transition-all border border-white/20 min-h-[40px]"
+                        >
+                          {toolLinkCopied ? (
+                            <>
+                              <Check className="w-4 h-4 text-green-400" />
+                              <span className="text-green-400">تم النسخ!</span>
+                            </>
+                          ) : (
+                            <>
+                              <Link2 className="w-4 h-4" />
+                              نسخ الرابط
+                            </>
+                          )}
+                        </button>
+                      </div>
+                    </div>
+                  </motion.div>
+
                   {/* Upsell Banner */}
                   <motion.div
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.5 }}
-                    className="mt-6 bg-gradient-to-bl from-[#0f1117] to-[#1e2235] rounded-2xl p-6 text-center relative overflow-hidden"
+                    transition={{ delay: 0.8 }}
+                    className="mt-5 bg-gradient-to-bl from-[#0f1117] to-[#1e2235] rounded-2xl p-6 text-center relative overflow-hidden"
                   >
                     <div className="absolute top-[-30px] right-[-30px] w-[120px] h-[120px] bg-[rgba(201,168,76,0.15)] rounded-full pointer-events-none" />
                     <div className="flex items-center justify-center gap-2 mb-2">
@@ -842,10 +1085,10 @@ export default function SadaLandingPage() {
                       </h3>
                     </div>
                     <p className="text-white/50 text-sm leading-relaxed mb-4 max-w-sm mx-auto">
-                      وصف عقاري كامل · هاشتاجات احترافية · محتوى لكل منصة · تصاميم جاهزة · نشر فوري
+                      وصف عقاري كامل · هاشتاقات احترافية · محتوى لكل منصة · تصاميم جاهزة · نشر فوري
                     </p>
                     <div className="flex flex-wrap justify-center gap-2 mb-5">
-                      {["📝 وصف تسويقي كامل", "# هاشتاجات ذكية", "📱 6 منصات", "🎨 تصاميم جاهزة", "💬 واتساب جاهز", "📊 تحليلات"].map((feat) => (
+                      {["📝 وصف تسويقي كامل", "# هاشتاقات ذكية", "📱 6 منصات", "🎨 تصاميم جاهزة", "💬 واتساب جاهز", "📊 تحليلات"].map((feat) => (
                         <span key={feat} className="bg-[rgba(201,168,76,0.12)] border border-[rgba(201,168,76,0.3)] text-[#c9a84c] text-xs font-semibold px-3 py-1.5 rounded-full">
                           {feat}
                         </span>
@@ -863,23 +1106,7 @@ export default function SadaLandingPage() {
                     </a>
                   </motion.div>
 
-                  {/* Share + Reset */}
-                  <div className="flex items-center justify-center gap-3 mt-5 pt-5 border-t border-[#e2e4ed]">
-                    <span className="text-xs text-[#3a3d4a] font-semibold">أعجبتك الأداة؟ شارك زملاءك:</span>
-                    <a
-                      href={`https://wa.me/?text=${encodeURIComponent(
-                        `🏠 جرّبت أداة مجانية تكتب عناوين تسويقية لأي عقار في 7 ثوانٍ!\n\nجرّبها مجاناً 👇\n${MAIN_CTA_BASE}`
-                      )}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1.5 bg-[#25D366] text-white text-xs font-bold px-4 py-2.5 rounded-xl no-underline hover:opacity-90 transition-opacity"
-                      onClick={() => trackEvent("share_whatsapp", { city: formData.city })}
-                    >
-                      <MessageCircle className="w-4 h-4" />
-                      شارك عبر واتساب
-                    </a>
-                  </div>
-
+                  {/* Reset */}
                   <button
                     onClick={handleReset}
                     className="w-full mt-4 border-[1.5px] border-[#e2e4ed] text-[#3a3d4a] font-bold text-sm py-3 rounded-[14px] cursor-pointer hover:border-[#c9a84c] hover:text-[#c9a84c] transition-colors flex items-center justify-center gap-2"
@@ -1048,7 +1275,7 @@ export default function SadaLandingPage() {
             لا تدع عقارك يضيع بين <span className="text-[#c9a84c]">الآلاف</span>
           </h2>
           <p className="text-white/50 text-sm leading-relaxed mb-6">
-            الأداة المجانية تعطيك عناوين فقط. النسخة الكاملة تعطيك وصفاً كاملاً، هاشتاجات، محتوى لكل منصة، وتصاميم احترافية — كل ذلك في 7 ثوانٍ.
+            الأداة المجانية تعطيك عناوين ونصائح. النسخة الكاملة تعطيك وصفاً كاملاً، هاشتاقات، محتوى لكل منصة، وتصاميم احترافية — كل ذلك في 7 ثوانٍ.
           </p>
 
           <a
