@@ -320,7 +320,7 @@ export default function SadaLandingPage() {
       setFormStep("results");
       trackEvent("generate_success", { propType: formData.propType, city: formData.city });
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : "حدث خطأ أثناء التوليد";
+      const message = err instanceof Error ? err.message : "حدث خطأ أثناء الكتابة";
       setError(message);
       setFormStep("form");
     }
@@ -399,7 +399,7 @@ export default function SadaLandingPage() {
         setFormStep("results");
         trackEvent("regenerate_success", { propType: formData.propType, city: formData.city });
       } catch (err: unknown) {
-        const message = err instanceof Error ? err.message : "حدث خطأ أثناء التوليد";
+        const message = err instanceof Error ? err.message : "حدث خطأ أثناء الكتابة";
         setError(message);
         setFormStep("results"); // Stay on results
       }
@@ -633,7 +633,7 @@ export default function SadaLandingPage() {
                 <Sparkles className="w-5 h-5 text-white" />
               </div>
               <div className="flex-1">
-                <h3 className="text-sm font-bold text-[#211F1A]">مولّد العناوين العقارية</h3>
+                <h3 className="text-sm font-bold text-[#211F1A]">كاتب العناوين العقارية</h3>
                 <p className="text-[11px] text-[#5B564C]">بيانات العقار → عناوين احترافية + نصائح نشر + هاشتاقات</p>
               </div>
               <div className="flex items-center gap-1 text-[10px] text-[#0D7C66] bg-[#0D7C66]/10 px-2.5 py-1 rounded-full font-semibold">
@@ -749,7 +749,7 @@ export default function SadaLandingPage() {
                     className="w-full mt-6 bg-[#0D7C66] hover:bg-[#0a6b58] text-white font-bold text-base py-3.5 rounded-full cursor-pointer flex items-center justify-center gap-2.5 transition-all hover:shadow-lg active:translate-y-0 shadow-sm min-h-[48px]"
                   >
                     <Zap className="w-5 h-5" />
-                    أنشئ العناوين التسويقية الآن
+                    اكتب العناوين التسويقية الآن
                   </button>
                 </motion.div>
               )}
@@ -759,11 +759,11 @@ export default function SadaLandingPage() {
                 <motion.div key="loading" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
                   className="flex flex-col items-center py-16 px-5 gap-4">
                   <div className="w-12 h-12 border-[3px] border-[#E8E1D2] border-t-[#0D7C66] rounded-full animate-spin" />
-                  <div className="text-[#211F1A] font-bold text-sm">صدى العقار يصيغ لك عناوين احترافية...</div>
-                  <div className="text-[#5B564C] text-xs">يحلّل بيانات العقار ويختار أفضل الأساليب لكل منصة</div>
+                  <div className="text-[#211F1A] font-bold text-sm">صدى العقار يكتب لك عناوين مقنعة...</div>
+                  <div className="text-[#5B564C] text-xs">يحلّل سلوك المشتري ويكتب ما يقنعه فعلاً</div>
                   <div className="flex items-center gap-2 text-[10px] text-[#0D7C66] mt-2">
                     <Target className="w-3.5 h-3.5" />
-                    <span>يستخدم تقنيات نفسية مثبتة لجذب المشترين</span>
+                    <span>يستخدم علم نفس المشتري لإقناعه بالتصرف فوراً</span>
                   </div>
                 </motion.div>
               )}
@@ -776,7 +776,7 @@ export default function SadaLandingPage() {
                     <div className="w-7 h-7 bg-[#0D7C66] rounded-full flex items-center justify-center flex-shrink-0">
                       <Check className="w-4 h-4 text-white" />
                     </div>
-                    <span className="text-sm font-bold text-[#0D7C66]">تم توليد العناوين بنجاح!</span>
+                    <span className="text-sm font-bold text-[#0D7C66]">تم صياغة العناوين بنجاح!</span>
                     <span className="flex-1 h-px bg-[#E8E1D2]" />
                   </div>
 
@@ -926,7 +926,7 @@ export default function SadaLandingPage() {
                   <div className="flex flex-col sm:flex-row gap-3 mt-5">
                     <button onClick={handleRegenerate}
                       className="flex-1 bg-[#0D7C66] hover:bg-[#0a6b58] text-white font-bold text-sm py-3 rounded-full cursor-pointer flex items-center justify-center gap-2 transition-colors shadow-sm min-h-[44px]">
-                      <RefreshCw className="w-4 h-4" /> ولّد عناوين جديدة لنفس العقار
+                      <RefreshCw className="w-4 h-4" /> اكتب عناوين جديدة لنفس العقار
                     </button>
                     <button onClick={handleReset}
                       className="flex-1 border border-[#E8E1D2] text-[#211F1A] font-bold text-sm py-3 rounded-full cursor-pointer hover:border-[#0D7C66] hover:text-[#0D7C66] transition-colors flex items-center justify-center gap-2 min-h-[44px]">
@@ -934,7 +934,7 @@ export default function SadaLandingPage() {
                     </button>
                   </div>
                   {requestCount > 1 && (
-                    <p className="text-center text-[11px] text-[#5B564C] mt-2">لقد ولّدت {requestCount} مجموعات — كل واحدة مختلفة ومخصصة ✨</p>
+                    <p className="text-center text-[11px] text-[#5B564C] mt-2">لقد كتبت {requestCount} مجموعات — كل واحدة بأسلوب مختلف ✨</p>
                   )}
                 </motion.div>
               )}
