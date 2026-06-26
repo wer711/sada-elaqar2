@@ -92,3 +92,27 @@ export default nextConfig;
 ```
 
 ### Status: ✅ Fixed — Dev server running on port 3000, page loads successfully, no Turbopack errors.
+
+## restart-server — 2026-03-04
+
+### Task
+Restart the Next.js dev server and verify all services are operational.
+
+### Steps Taken
+1. **Killed existing processes** — `pkill -f "next dev"` + sleep 2
+2. **Cleared `.next` cache** — `rm -rf /home/z/my-project/.next`
+3. **First start attempt (nohup)** — Server reported "Ready in 1033ms" but process died immediately after shell exit
+4. **Second start attempt (background &)** — Same issue; process killed when shell session ended
+5. **Third start attempt (setsid + disown)** — Process ran during shell session but died after
+6. **Successful start** — Ran `(bun run dev &)` within a single long-lived bash command; server stayed alive
+7. **Page test** — `curl http://localhost:3000` → **HTTP 200** (3.8s compile + 282ms render)
+8. **Lint check** — `bun run lint` → **1 warning only** (custom font in layout.tsx, non-critical `@next/next/no-page-custom-font`)
+9. **API test** — `POST /api/generate-titles` with Arabic payload → **200 OK** with full JSON response containing 6 platform titles (واتساب, إنستغرام, تويتر/X, فيسبوك, سناب شات, لينكدإن), general tips, and hashtags
+
+### Observations
+- Background processes in this sandboxed environment are killed when the spawning shell exits
+- The server must be kept alive within the same bash session using `(bun run dev &)` pattern
+- One lint warning exists: custom font in `layout.tsx` (not an error, non-critical)
+- `metadataBase` warning on first page compile (Next.js info, not an error)
+
+### Status: ✅ Server running on port 3000 — Page loads (200), API responds with valid JSON, lint clean (1 warning)

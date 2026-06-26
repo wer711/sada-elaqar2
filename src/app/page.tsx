@@ -37,6 +37,8 @@ import {
   BarChart3,
   Heart,
   ArrowUpRight,
+  RefreshCw,
+  Crown,
 } from "lucide-react";
 
 // ─── Types ─────────────────────────────────────────────────
@@ -227,57 +229,7 @@ function useUserCounter() {
   return count;
 }
 
-function useCountdown() {
-  const STORAGE_KEY = "sada_countdown_end";
-  const TEN_DAYS_MS = 10 * 24 * 60 * 60 * 1000;
-  const INITIAL = { days: 10, hours: 0, minutes: 0, seconds: 0 };
-
-  const calcRemaining = useCallback((target: number) => {
-    const diff = Math.max(0, target - Date.now());
-    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-    const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-    const seconds = Math.floor((diff % (1000 * 60)) / 1000);
-    return { days, hours, minutes, seconds };
-  }, []);
-
-  const [timeLeft, setTimeLeft] = useState(INITIAL);
-  const targetRef = useRef<number | null>(null);
-
-  useEffect(() => {
-    let target: number;
-    const stored = localStorage.getItem(STORAGE_KEY);
-    if (stored) {
-      const end = parseInt(stored, 10);
-      if (end > Date.now()) {
-        target = end;
-      } else {
-        target = Date.now() + TEN_DAYS_MS;
-        localStorage.setItem(STORAGE_KEY, String(target));
-      }
-    } else {
-      target = Date.now() + TEN_DAYS_MS;
-      localStorage.setItem(STORAGE_KEY, String(target));
-    }
-    targetRef.current = target;
-
-    const raf = requestAnimationFrame(() => {
-      setTimeLeft(calcRemaining(target));
-    });
-
-    const timer = setInterval(() => {
-      if (targetRef.current) {
-        setTimeLeft(calcRemaining(targetRef.current));
-      }
-    }, 1000);
-    return () => {
-      cancelAnimationFrame(raf);
-      clearInterval(timer);
-    };
-  }, [calcRemaining]);
-
-  return timeLeft;
-}
+// Countdown timer removed — the tool is free and unlimited
 
 // ─── Share Helpers ─────────────────────────────────────────
 function shareOnWhatsApp(text: string) {
@@ -310,7 +262,8 @@ export default function SadaLandingPage() {
   const [busyMessage, setBusyMessage] = useState("");
 
   const userCount = useUserCounter();
-  const countdown = useCountdown();
+  const [requestCount, setRequestCount] = useState(1); // Track regenerations for better AI context
+  const [previousTitles, setPreviousTitles] = useState<string[]>([]); // Store previous titles to avoid repetition
 
   useEffect(() => {
     trackEvent("page_view");
@@ -362,6 +315,8 @@ export default function SadaLandingPage() {
 
       setTitles(data.titles || []);
       setGeneralTips(data.generalTips || []);
+      // Store previous titles for anti-repetition
+      setPreviousTitles(prev => [...prev, ...(data.titles || []).map((t: TitleResult) => t.title)]);
       setFormStep("results");
       trackEvent("generate_success", { propType: formData.propType, city: formData.city });
     } catch (err: unknown) {
@@ -412,6 +367,45 @@ export default function SadaLandingPage() {
     trackEvent("share_tool", { method });
   };
 
+  const handleRegenerate = () => {
+    // Regenerate with same property data — no need to refill
+    setRequestCount(prev => prev + 1);
+    setFormStep("loading");
+    setError("");
+    setBusyMessage("");
+    trackEvent("regenerate", { propType: formData.propType, city: formData.city, requestCount: String(requestCount + 1) });
+
+    (async () => {
+      try {
+        const utm = getUtmParams();
+        const res = await fetch("/api/generate-titles", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ ...formData, ...utm, previousTitles, requestCount: requestCount + 1 }),
+        });
+        const data = await res.json();
+
+        if (data.message && (!data.titles || data.titles.length === 0)) {
+          setBusyMessage(data.message);
+          setFormStep("results"); // Stay on results page with message
+          return;
+        }
+
+        if (!res.ok && data.error) throw new Error(data.error || "حدث خطأ");
+
+        setTitles(data.titles || []);
+        setGeneralTips(data.generalTips || []);
+        setPreviousTitles(prev => [...prev, ...(data.titles || []).map((t: TitleResult) => t.title)]);
+        setFormStep("results");
+        trackEvent("regenerate_success", { propType: formData.propType, city: formData.city });
+      } catch (err: unknown) {
+        const message = err instanceof Error ? err.message : "حدث خطأ أثناء التوليد";
+        setError(message);
+        setFormStep("results"); // Stay on results
+      }
+    })();
+  };
+
   const handleReset = () => {
     setFormData(INITIAL_FORM);
     setTitles([]);
@@ -419,6 +413,8 @@ export default function SadaLandingPage() {
     setFormStep("form");
     setError("");
     setBusyMessage("");
+    setRequestCount(1);
+    setPreviousTitles([]);
   };
 
   const countryCount = Object.keys(CITIES).length;
@@ -461,7 +457,7 @@ export default function SadaLandingPage() {
               className="bg-[#0D7C66] hover:bg-[#0a6b58] text-white font-bold text-sm px-5 py-2.5 rounded-full no-underline transition-colors whitespace-nowrap flex items-center gap-1.5 min-h-[40px]"
               onClick={() => trackEvent("click_header_cta")}
             >
-              جرّب النسخة الكاملة
+              جرّب النسخة برو
               <ArrowUpRight className="w-3.5 h-3.5" />
             </a>
           </div>
@@ -484,20 +480,7 @@ export default function SadaLandingPage() {
               <span>مجاناً بالكامل</span>
             </div>
 
-            {/* Countdown */}
-            <div className="flex items-center justify-center gap-1.5 mb-6">
-              <span className="text-[#5B564C] text-xs">العرض ينتهي خلال</span>
-              <div className="flex gap-1 items-center">
-                <span className="bg-[#0D7C66] text-white px-2 py-0.5 rounded text-[11px] font-black">{countdown.days}</span>
-                <span className="text-[#5B564C] text-[10px]">يوم</span>
-                <span className="text-[#E8E1D2]">:</span>
-                <span className="bg-[#0D7C66] text-white px-1.5 py-0.5 rounded text-[11px] font-black">{String(countdown.hours).padStart(2, "0")}</span>
-                <span className="text-[#E8E1D2]">:</span>
-                <span className="bg-[#0D7C66] text-white px-1.5 py-0.5 rounded text-[11px] font-black">{String(countdown.minutes).padStart(2, "0")}</span>
-                <span className="text-[#E8E1D2]">:</span>
-                <span className="bg-[#0D7C66] text-white px-1.5 py-0.5 rounded text-[11px] font-black">{String(countdown.seconds).padStart(2, "0")}</span>
-              </div>
-            </div>
+
 
             {/* Headline */}
             <h1 className="text-3xl sm:text-4xl lg:text-[3.2rem] font-extrabold leading-tight text-[#211F1A] max-w-3xl mx-auto mb-5">
@@ -528,7 +511,7 @@ export default function SadaLandingPage() {
                 className="border border-[#E8E1D2] hover:border-[#0D7C66] hover:text-[#0D7C66] text-[#211F1A] font-bold text-base px-8 py-3 rounded-full no-underline transition-colors flex items-center gap-2 min-h-[48px]"
                 onClick={() => trackEvent("click_hero_secondary")}
               >
-                جرّب النسخة الكاملة
+                جرّب النسخة برو
                 <ArrowUpRight className="w-4 h-4" />
               </a>
             </div>
@@ -863,18 +846,18 @@ export default function SadaLandingPage() {
                     ))}
                   </div>
 
-                  {/* General Marketing Tips */}
+                  {/* Personal Marketing Tips */}
                   {generalTips.length > 0 && (
                     <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}
                       className="mt-5 bg-[#FBF8F2] border border-[#E8E1D2] rounded-2xl p-5">
                       <div className="flex items-center gap-2 mb-3">
-                        <Megaphone className="w-5 h-5 text-[#D4A853]" />
-                        <h4 className="text-sm font-bold text-[#211F1A]">نصائح تسويقية مجانية</h4>
+                        <Heart className="w-5 h-5 text-[#0D7C66]" />
+                        <h4 className="text-sm font-bold text-[#211F1A]">نصائح مخصصة لك شخصياً في {formData.city}</h4>
                       </div>
                       <div className="flex flex-col gap-2">
                         {generalTips.map((tip, idx) => (
                           <div key={idx} className="flex items-start gap-2">
-                            <ThumbsUp className="w-3.5 h-3.5 text-[#0D7C66] mt-0.5 flex-shrink-0" />
+                            <ThumbsUp className="w-3.5 h-3.5 text-[#D4A853] mt-0.5 flex-shrink-0" />
                             <span className="text-xs text-[#5B564C] leading-relaxed">{tip}</span>
                           </div>
                         ))}
@@ -919,7 +902,7 @@ export default function SadaLandingPage() {
                     <div className="relative z-10">
                       <div className="flex items-center justify-center gap-2 mb-2">
                         <PartyPopper className="w-5 h-5 text-[#D4A853]" />
-                        <h3 className="text-white text-base font-extrabold">أعجبتك النتيجة؟ النسخة الكاملة تعطيك أكثر بكثير</h3>
+                        <h3 className="text-white text-base font-extrabold">تريد نتائج أسرع وأقوى؟ النسخة برو لك</h3>
                       </div>
                       <p className="text-white/50 text-sm leading-relaxed mb-4 max-w-sm mx-auto">
                         وصف عقاري كامل · هاشتاقات احترافية · محتوى لكل منصة · تصاميم جاهزة · نشر فوري
@@ -934,15 +917,25 @@ export default function SadaLandingPage() {
                       <a href={trackedUrl("/", "upsell-banner")} target="_blank" rel="noopener noreferrer"
                         className="inline-flex items-center gap-2 bg-[#D4A853] hover:bg-[#c4974a] text-white font-bold text-sm px-7 py-3 rounded-full no-underline transition-colors shadow-lg"
                         onClick={() => trackEvent("click_upsell_banner", { city: formData.city })}>
-                        جرّب النسخة الكاملة مجاناً <ArrowLeft className="w-4 h-4" />
+                        جرّب النسخة برو مجاناً <ArrowLeft className="w-4 h-4" />
                       </a>
                     </div>
                   </motion.div>
 
-                  <button onClick={handleReset}
-                    className="w-full mt-4 border border-[#E8E1D2] text-[#211F1A] font-bold text-sm py-3 rounded-full cursor-pointer hover:border-[#0D7C66] hover:text-[#0D7C66] transition-colors flex items-center justify-center gap-2">
-                    <RotateCcw className="w-4 h-4" /> أنشئ عناوين لعقار آخر
-                  </button>
+                  {/* Action buttons row */}
+                  <div className="flex flex-col sm:flex-row gap-3 mt-5">
+                    <button onClick={handleRegenerate}
+                      className="flex-1 bg-[#0D7C66] hover:bg-[#0a6b58] text-white font-bold text-sm py-3 rounded-full cursor-pointer flex items-center justify-center gap-2 transition-colors shadow-sm min-h-[44px]">
+                      <RefreshCw className="w-4 h-4" /> ولّد عناوين جديدة لنفس العقار
+                    </button>
+                    <button onClick={handleReset}
+                      className="flex-1 border border-[#E8E1D2] text-[#211F1A] font-bold text-sm py-3 rounded-full cursor-pointer hover:border-[#0D7C66] hover:text-[#0D7C66] transition-colors flex items-center justify-center gap-2 min-h-[44px]">
+                      <RotateCcw className="w-4 h-4" /> عقار مختلف
+                    </button>
+                  </div>
+                  {requestCount > 1 && (
+                    <p className="text-center text-[11px] text-[#5B564C] mt-2">لقد ولّدت {requestCount} مجموعات — كل واحدة مختلفة ومخصصة ✨</p>
+                  )}
                 </motion.div>
               )}
             </AnimatePresence>
@@ -1041,12 +1034,12 @@ export default function SadaLandingPage() {
             لا تدع عقارك يضيع بين <span className="bg-gradient-to-l from-[#0D7C66] to-[#D4A853] bg-clip-text text-transparent">الآلاف</span>
           </h2>
           <p className="text-[#5B564C] text-sm leading-relaxed mb-6">
-            الأداة المجانية تعطيك عناوين ونصائح. النسخة الكاملة تعطيك وصفاً كاملاً، هاشتاقات، محتوى لكل منصة، وتصاميم احترافية — كل ذلك في 7 ثوانٍ.
+            الأداة المجانية تعطيك عناوين ونصائح. النسخة برو تعطيك وصفاً كاملاً، هاشتاقات، محتوى لكل منصة، وتصاميم احترافية — كل ذلك في 7 ثوانٍ.
           </p>
           <a href={trackedUrl("/", "final-cta")} target="_blank" rel="noopener noreferrer"
             className="inline-flex items-center gap-2 bg-[#0D7C66] hover:bg-[#0a6b58] text-white font-bold text-base px-10 py-4 rounded-full no-underline transition-colors shadow-lg min-h-[48px]"
             onClick={() => trackEvent("click_final_cta")}>
-            <TrendingUp className="w-5 h-5" /> جرّب صدى العقار الكامل — مجاناً
+            <TrendingUp className="w-5 h-5" /> جرّب النسخة برو — مجاناً
           </a>
           <p className="text-[#5B564C]/50 text-xs mt-4">لا تحتاج بطاقة بنكية · سجّل وابدأ فوراً</p>
         </motion.div>
