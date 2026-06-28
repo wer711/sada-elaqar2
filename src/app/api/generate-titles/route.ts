@@ -29,7 +29,7 @@ async function generateWithOpenRouter(prompt: string): Promise<string> {
   if (!apiKey) throw new Error("NO_KEY");
   const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
     method: "POST",
-    headers: { "Content-Type": "application/json", "Authorization": `Bearer ${apiKey}`, "HTTP-Referer": "https://sada-elaqar.vercel.app", "X-Title": "صدى العقار" },
+    headers: { "Content-Type": "application/json", "Authorization": `Bearer ${apiKey}`, "HTTP-Referer": "https://sada-elaqar26.vercel.app", "X-Title": "مرآة العقار" },
     body: JSON.stringify({
       model: "deepseek/deepseek-chat-v3-0324:free",
       messages: [{ role: "system", content: AI_PROMPT_SYSTEM }, { role: "user", content: prompt }],

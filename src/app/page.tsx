@@ -356,9 +356,9 @@ export default function SadaLandingPage() {
   };
 
   const handleShareTool = (method: string) => {
-    const toolShareText = `🏠 جرّبت أداة مجانية تكتب عناوين تسويقية احترافية لأي عقار في 7 ثوانٍ!\n\n✅ 6 منصات مختلفة\n✅ نصائح نشر مجانية\n✅ هاشتاقات ذكية\n\nجرّبها مجاناً 👇\n${TOOL_URL}`;
+    const toolShareText = `🏠 جرّبت مرآة العقار — أداة مجانية تكتب عناوين تسويقية احترافية لأي عقار في 7 ثوانٍ!\n\n✅ 6 منصات مختلفة\n✅ نصائح نشر مجانية\n✅ هاشتاقات ذكية\n\nجرّبها مجاناً 👇\n${TOOL_URL}`;
     if (method === "whatsapp") shareOnWhatsApp(toolShareText);
-    else if (method === "twitter") shareOnTwitter(`🏠 أداة مجانية تكتب عناوين تسويقية احترافية لأي عقار في 7 ثوانٍ! جرّبها 👇\n${TOOL_URL}`);
+    else if (method === "twitter") shareOnTwitter(`🏠 مرآة العقار — أداة مجانية تكتب عناوين تسويقية احترافية لأي عقار في 7 ثوانٍ! جرّبها 👇\n${TOOL_URL}`);
     else if (method === "copy") {
       copyToClipboard(toolShareText).then((ok) => {
         if (ok) { setToolLinkCopied(true); setTimeout(() => setToolLinkCopied(false), 2500); }
@@ -441,8 +441,8 @@ export default function SadaLandingPage() {
               <Home className="w-4.5 h-4.5 text-white" />
             </div>
             <div>
-              <div className="text-[#211F1A] font-bold text-base leading-tight">صدى العقار</div>
-              <div className="text-[#5B564C] text-[11px]">مساعد التسويق العقاري</div>
+              <div className="text-[#211F1A] font-bold text-base leading-tight">مرآة العقار</div>
+              <div className="text-[#5B564C] text-[11px]">عناوين تسويقية احترافية</div>
             </div>
           </a>
           <div className="flex items-center gap-3 sm:gap-4">
@@ -633,7 +633,7 @@ export default function SadaLandingPage() {
                 <Sparkles className="w-5 h-5 text-white" />
               </div>
               <div className="flex-1">
-                <h3 className="text-sm font-bold text-[#211F1A]">كاتب العناوين العقارية</h3>
+                <h3 className="text-sm font-bold text-[#211F1A]">مرآة العقار</h3>
                 <p className="text-[11px] text-[#5B564C]">بيانات العقار → عناوين احترافية + نصائح نشر + هاشتاقات</p>
               </div>
               <div className="flex items-center gap-1 text-[10px] text-[#0D7C66] bg-[#0D7C66]/10 px-2.5 py-1 rounded-full font-semibold">
@@ -759,7 +759,7 @@ export default function SadaLandingPage() {
                 <motion.div key="loading" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
                   className="flex flex-col items-center py-16 px-5 gap-4">
                   <div className="w-12 h-12 border-[3px] border-[#E8E1D2] border-t-[#0D7C66] rounded-full animate-spin" />
-                  <div className="text-[#211F1A] font-bold text-sm">صدى العقار يكتب لك عناوين مقنعة...</div>
+                  <div className="text-[#211F1A] font-bold text-sm">مرآة العقار تكتب لك عناوين مقنعة...</div>
                   <div className="text-[#5B564C] text-xs">يحلّل سلوك المشتري ويكتب ما يقنعه فعلاً</div>
                   <div className="flex items-center gap-2 text-[10px] text-[#0D7C66] mt-2">
                     <Target className="w-3.5 h-3.5" />
@@ -964,7 +964,7 @@ export default function SadaLandingPage() {
                     <div className="text-xs text-red-500 font-bold">{item.before}</div>
                   </div>
                   <div className="bg-[#0D7C66]/5 rounded-lg px-3 py-2 text-center">
-                    <div className="text-[10px] text-[#0D7C66] font-semibold mb-0.5">مع صدى العقار 🚀</div>
+                    <div className="text-[10px] text-[#0D7C66] font-semibold mb-0.5">مع مرآة العقار 🚀</div>
                     <div className="text-xs text-[#0D7C66] font-bold">{item.after}</div>
                   </div>
                 </div>
@@ -1050,12 +1050,12 @@ export default function SadaLandingPage() {
         أداة مجانية من{" "}
         <a href={trackedUrl("/", "footer")} target="_blank" rel="noopener noreferrer"
           className="text-[#0D7C66] no-underline hover:underline py-1 px-0.5 inline-block font-semibold"
-          onClick={() => trackEvent("click_footer")}>صدى العقار</a>
-        {" "}— مساعد التسويق العقاري للسوق العربي
+          onClick={() => trackEvent("click_footer")}>مرآة العقار</a>
+        {" "}— عناوين تسويقية احترافية للسوق العربي
       </footer>
 
       {/* ════════════════ FLOATING WHATSAPP ════════════════ */}
-      <a href="https://wa.me/213696212465?text=مرحباً، أريد الاستفسار عن صدى العقار"
+      <a href="https://wa.me/213696212465?text=مرحباً، أريد الاستفسار عن مرآة العقار"
         target="_blank" rel="noopener noreferrer"
         className="fixed bottom-5 right-5 sm:bottom-6 sm:right-6 z-50 w-12 h-12 sm:w-14 sm:h-14 bg-[#25D366] rounded-full flex items-center justify-center shadow-[0_4px_20px_rgba(37,211,102,0.4)] hover:scale-110 transition-transform"
         title="تواصل عبر واتساب" onClick={() => trackEvent("click_whatsapp_float")}>
